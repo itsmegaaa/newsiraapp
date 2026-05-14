@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -350,22 +349,16 @@ class _BerandaNotarisState extends State<BerandaNotaris> {
                           final bool isHampirTelat = !isSelesai && !isTelat && sisaHari <= 3;
                           // Determine status badge
                           late SiraStatusBadge statusBadge;
-                          String statusText;
                           if (isSelesai) {
                             statusBadge = SiraStatusBadge(text: 'SELESAI', status: SiraStatus.success, small: true);
-                            statusText = 'SELESAI';
                           } else if (isMenunggu) {
                             statusBadge = SiraStatusBadge(text: 'MENUNGGU', status: SiraStatus.info, small: true);
-                            statusText = 'MENUNGGU';
                           } else if (isTelat) {
                             statusBadge = SiraStatusBadge(text: 'TELAT', status: SiraStatus.error, small: true);
-                            statusText = 'TELAT';
                           } else if (isHampirTelat) {
                             statusBadge = SiraStatusBadge(text: 'H-$sisaHari', status: SiraStatus.warning, small: true);
-                            statusText = 'H-$sisaHari';
                           } else {
                             statusBadge = SiraStatusBadge(text: item['progres'], status: SiraStatus.info, small: true);
-                            statusText = item['progres'];
                           }
 
                           return Padding(
@@ -579,94 +572,6 @@ class _BerandaNotarisState extends State<BerandaNotaris> {
     );
   }
 
-  Widget _buatSideMenu() {
-    List<String> listTahun = ['SEMUA'], listPIC = ['SEMUA'], listKCU = ['SEMUA'];
-    for (var item in _controller.daftarOrder) {
-      // Hindari crash jika tanggal tidak valid atau null
-      try {
-        final tglStr = item['tglOrder']?.toString() ?? '';
-        final dt = DateTime.tryParse(tglStr);
-        if (dt != null) listTahun.add(dt.year.toString());
-      } catch (_) {}
-      final pic = item['picInternal']?.toString() ?? '';
-      final kcu = item['kcu']?.toString() ?? '';
-      if (pic.isNotEmpty) listPIC.add(pic);
-      if (kcu.isNotEmpty) listKCU.add(kcu);
-    }
-    listTahun = listTahun.toSet().toList()..sort();
-    listPIC = listPIC.toSet().toList()..sort();
-    listKCU = listKCU.toSet().toList()..sort();
-
-    return Drawer(child: ListView(children: [
-      DrawerHeader(
-        decoration: const BoxDecoration(gradient: LinearGradient(colors: [Colors.blueAccent, Colors.lightBlue])), 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            const CircleAvatar(backgroundColor: Colors.white, radius: 30, child: Icon(Icons.person, color: Colors.blueAccent, size: 40)),
-            const SizedBox(height: 12),
-            Text(_controller.userEmail.isEmpty ? 'Memuat...' : _controller.userEmail, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-            Container(margin: const EdgeInsets.only(top: 4), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Text('Akses: ${_controller.userRole}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)))
-          ]
-        )
-      ),
-      ListTile(leading: const Icon(Icons.history, color: Colors.orange), title: const Text('Riwayat Aktivitas'), onTap: () { Navigator.pop(context); _tampilkanRiwayatLog(); }),
-      const Divider(),
-      const Padding(padding: EdgeInsets.all(16), child: Text('FILTER DATA', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
-      
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('FILTER DATA', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-            TextButton.icon(
-              onPressed: () {
-                _controller.resetFilter();
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Filter dikembalikan ke awal', style: TextStyle(color: Colors.white)), backgroundColor: Colors.blueAccent, duration: Duration(seconds: 1)),
-                );
-              },
-              icon: const Icon(Icons.refresh, size: 18, color: Colors.redAccent),
-              label: const Text('Reset', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), 
-                minimumSize: Size.zero, 
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: DropdownButtonFormField<String>(decoration: InputDecoration(labelText: 'Tahun', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))), initialValue: _controller.filterTahun, items: listTahun.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(), onChanged: (v) { _controller.setFilterDropdown(tahun: v); Navigator.pop(context); })),
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), child: DropdownButtonFormField<String>(decoration: InputDecoration(labelText: 'PIC Internal', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))), initialValue: _controller.filterPIC, items: listPIC.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(), onChanged: (v) { _controller.setFilterDropdown(pic: v); Navigator.pop(context); })),
-      Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12), child: DropdownButtonFormField<String>(isExpanded: true, decoration: InputDecoration(labelText: 'KCU / KCP', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))), initialValue: _controller.filterKCU, items: listKCU.map((k) => DropdownMenuItem(value: k, child: Text(k, overflow: TextOverflow.ellipsis))).toList(), onChanged: (v) { _controller.setFilterDropdown(kcu: v); Navigator.pop(context); })),
-
-      const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text('RENTANG TANGGAL ORDER', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
-      ListTile(
-        leading: const Icon(Icons.date_range, color: Colors.blueAccent),
-        title: Text(_controller.filterTanggalMulai != null && _controller.filterTanggalAkhir != null ? '${DateFormat('dd MMM yyyy').format(_controller.filterTanggalMulai!)} - ${DateFormat('dd MMM yyyy').format(_controller.filterTanggalAkhir!)}' : 'Pilih Rentang Waktu', style: TextStyle(fontSize: 14, fontWeight: _controller.filterTanggalMulai != null ? FontWeight.bold : FontWeight.normal, color: _controller.filterTanggalMulai != null ? Colors.blueAccent : null)),
-        trailing: _controller.filterTanggalMulai != null ? IconButton(icon: const Icon(Icons.clear, color: Colors.red, size: 20), onPressed: () { _controller.setRentangTanggal(null, null); Navigator.pop(context); }) : const Icon(Icons.chevron_right),
-        onTap: () async { DateTimeRange? pickedRange = await showDateRangePicker(context: context, initialDateRange: _controller.filterTanggalMulai != null && _controller.filterTanggalAkhir != null ? DateTimeRange(start: _controller.filterTanggalMulai!, end: _controller.filterTanggalAkhir!) : null, firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 365))); if (pickedRange != null) { _controller.setRentangTanggal(pickedRange.start, pickedRange.end); Navigator.pop(context); } },
-      ),
-
-      const Divider(),
-      ListTile(leading: const Icon(Icons.settings), title: const Text('Pengaturan'), onTap: () async { Navigator.pop(context); await Navigator.push(context, MaterialPageRoute(builder: (context) => const HalamanPengaturan())); _controller.inisialisasiData(); }),
-      const Divider(),
-      ListTile(leading: const Icon(Icons.logout, color: Colors.redAccent), title: const Text('Keluar', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-      onTap: () async{
-        Navigator.pop(context);
-        await FirebaseAuth.instance.signOut(); 
-        if (mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
-        }),    
-    ]));
-  }
-
   void _tampilkanDetail(Map<String, dynamic> item) {
     String umurStr = item['progres'] == 'SELESAI' ? 'SELESAI' : '${DateTime.now().difference(DateTime.parse(item['tglOrder'])).inDays} Hari';
 
@@ -738,78 +643,6 @@ class _BerandaNotarisState extends State<BerandaNotaris> {
         ]),
       ),
     );
-  }
-
-  void _tampilkanRiwayatLog() {
-    showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(25))), padding: const EdgeInsets.all(20), height: MediaQuery.of(context).size.height * 0.8,
-        child: Column(children: [
-          Container(width: 40, height: 5, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Riwayat Aktivitas', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
-            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.grey)),
-          ]),
-          const Divider(),
-          Expanded(child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('logs_notaris').orderBy('waktu', descending: true).limit(50).snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-              var docs = snapshot.data!.docs;
-              if (docs.isEmpty) return _buildEmptyLog();
-              return ListView.builder(
-                itemCount: docs.length,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                itemBuilder: (context, index) {
-                  var log = docs[index].data() as Map<String, dynamic>;
-                  return _buildLogItem(log);
-                },
-              );
-            },
-          )),
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildLogItem(Map<String, dynamic> log) {
-    String aksi = (log['aksi'] ?? 'INFO').toUpperCase();
-    String detail = log['detail'] ?? '-';
-    DateTime? waktu = (log['waktu'] as Timestamp?)?.toDate();
-    IconData ikon; Color warna;
-    switch (aksi) {
-      case 'TAMBAH': ikon = Icons.add_circle_outline; warna = Colors.green; break;
-      case 'EDIT': ikon = Icons.edit_note; warna = Colors.blue; break;
-      case 'HAPUS': ikon = Icons.delete_forever; warna = Colors.red; break;
-      case 'SELESAI': ikon = Icons.check_circle; warna = Colors.teal; break;
-      case 'APPROVE': ikon = Icons.verified_user; warna = Colors.purple; break;
-      case 'EXPORT': ikon = Icons.file_download; warna = Colors.orange; break;
-      default: ikon = Icons.info_outline; warna = Colors.grey;
-    }
-    return IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Column(children: [
-        Container(margin: const EdgeInsets.symmetric(horizontal: 10), padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: warna.withOpacity(0.1), shape: BoxShape.circle), child: Icon(ikon, color: warna, size: 18)),
-        Expanded(child: Container(width: 2, color: Colors.grey.withOpacity(0.2))),
-      ]),
-      Expanded(child: Padding(padding: const EdgeInsets.only(bottom: 16, right: 8), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: warna.withOpacity(0.1), borderRadius: BorderRadius.circular(4)), child: Text(aksi, style: TextStyle(color: warna, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5))),
-          Text(waktu != null ? DateFormat('HH:mm').format(waktu) : '-', style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500)),
-        ]),
-        const SizedBox(height: 4),
-        Text(detail, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
-        if (waktu != null) Text(DateFormat('dd MMM yyyy').format(waktu), style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
-      ])))
-    ]));
-  }
-
-  Widget _buildEmptyLog() {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.history_toggle_off, size: 60, color: Colors.grey.shade300),
-      const SizedBox(height: 10),
-      Text('Belum ada riwayat aktivitas.', style: TextStyle(color: Colors.grey.shade400)),
-    ]));
   }
 
   Widget _barisDetail(String label, dynamic nilai) => Padding(padding: const EdgeInsets.symmetric(vertical: 4.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 100, child: Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13))), const Text(' :  ', style: TextStyle(color: Colors.grey)), Expanded(child: Text(nilai?.toString() ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)))]));

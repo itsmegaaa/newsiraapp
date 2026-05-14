@@ -71,10 +71,6 @@ class _HalamanPengaturanState extends State<HalamanPengaturan> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Target SLA Default diperbarui!')));
   }
 
-  Future<void> _toggleTema(bool val) async {
-    // Dark theme is no longer supported. Do nothing.
-  }
-
   Future<void> _backupDataJSON() async {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Menyiapkan backup JSON...')));
     try {
