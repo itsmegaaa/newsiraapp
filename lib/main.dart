@@ -1,79 +1,147 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
-import 'utils/globals.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'utils/notifikasi_service.dart';
+import 'controllers/form_laporan_controller.dart';
+import 'data/repositories/laporan_repository.dart';
+import 'controllers/user_provider.dart';
+import 'controllers/laporan_controller.dart';
+import 'ui/screens/auth/login_screen.dart';
+import 'ui/screens/portal/home_screen.dart';
+import 'controllers/theme_controller.dart';
 
-// Import the design system theme
-import 'core/theme/app_theme.dart';
-
-
+// ============================================================================
+// MAIN FUNCTION
+// ============================================================================
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
   FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true, 
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    persistenceEnabled: true,
+    cacheSizeBytes: 40 * 1024 * 1024,
   );
-  
-  // Inisialisasi layanan notifikasi lokal setelah Firebase siap
-  await NotifikasiService.inisialisasi();
 
-  final prefs = await SharedPreferences.getInstance();
-  final isDark = prefs.getBool('tema_gelap') ?? false;
-  themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+  final themeCtrl = ThemeController();
+  await themeCtrl.muatDariPrefs();
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ThemeController>.value(value: themeCtrl),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        Provider(create: (_) => LaporanRepository()),
+        ChangeNotifierProvider(
+          create: (ctx) =>
+              LaporanController(repo: ctx.read<LaporanRepository>()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              FormLaporanController(repo: context.read<LaporanRepository>()),
+        )
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
+// ============================================================================
+// APP ROOT WIDGET
+// ============================================================================
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // The design brief specifies that only light mode is supported.
-    // We therefore ignore the persisted theme preference and always
-    // use the light theme defined in AppTheme. This keeps the UI
-    // consistent and avoids dark mode bugs.
+    final themeCtrl = context.watch<ThemeController>();
+
     return MaterialApp(
-      title: 'Laporan Tracker',
+      title: 'SIRA',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      themeMode: themeCtrl.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
+      // Tema Terang (Sesuai Panduan UI)
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC), // bgColor
+        primaryColor: const Color(0xFF0F172A), // navyColor
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF0F172A),
+          secondary: Color(0xFFD4AF37), // goldColor
+          surface: Colors.white,
+        ),
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          iconTheme: IconThemeData(color: Color(0xFF0F172A)),
+          titleTextStyle: TextStyle(
+            color: Color(0xFF0F172A),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        useMaterial3: true,
+      ),
+
+      // Tema Gelap (Sesuai Panduan UI)
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212), // darkBg
+        primaryColor: const Color(0xFF0F172A),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF0F172A),
+          secondary: Color(0xFFD4AF37),
+          surface: Color(0xFF1E1E1E), // darkSurface
+        ),
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          backgroundColor: Color(0xFF1E1E1E),
+          iconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        useMaterial3: true,
+      ),
+
       home: const AuthGate(),
     );
   }
 }
 
-// === PENJAGA PINTU LOGIN ===
+// ============================================================================
+// AUTH GATE
+// ============================================================================
 class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
+  const AuthGate({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      // Memantau apakah user sedang login atau logout
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFD4AF37), // goldColor
+              ),
+            ),
+          );
         }
 
-        // Jika ada data user (berarti sudah login), arahkan ke Beranda
         if (snapshot.hasData) {
           return const HomeScreen();
         }
 
-        // Jika tidak ada user (belum login/logout), arahkan ke Login
         return const LoginScreen();
       },
     );
