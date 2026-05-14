@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:ui'; // Wajib untuk ImageFilter
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
