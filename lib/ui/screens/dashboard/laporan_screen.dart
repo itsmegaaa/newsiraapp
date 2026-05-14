@@ -12,8 +12,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../data/models/laporan_model.dart';
 import '../../layout/sira_responsive_shell.dart';
 import '../../navigation/sira_page_route.dart';
+import '../../widgets/sira_glass_card.dart';
 import '../../widgets/sira_secondary_button.dart';
-import '../../widgets/sira_solid_card.dart';
 import '../../widgets/sira_status_badge.dart';
 import '../../widgets/sira_toast.dart';
 import '../form/form_laporan_screen.dart';
@@ -70,52 +70,42 @@ class _LaporanScreenState extends State<LaporanScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SiraSolidCard(
-            color: AppColors.surfaceL2,
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: laporanCtrl.cariLaporan,
-                  decoration: InputDecoration(
-                    hintText: 'Cari debitur, bank, atau covernote...',
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: _searchCtrl.text.isNotEmpty
-                        ? IconButton(
-                            onPressed: () {
-                              setState(() => _searchCtrl.clear());
-                              laporanCtrl.cariLaporan('');
-                            },
-                            icon: const Icon(Icons.close_rounded),
-                          )
-                        : null,
-                  ),
+          SiraGlassCard(
+            subtle: true,
+            padding: const EdgeInsets.all(AppSpacing.base),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: laporanCtrl.cariLaporan,
+              decoration: InputDecoration(
+                hintText: 'Cari debitur, bank, atau covernote...',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIconConstraints: const BoxConstraints(
+                  minWidth: 0,
+                  minHeight: 0,
                 ),
-                const SizedBox(height: AppSpacing.base),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final status in <String>[
-                        'SEMUA',
-                        ...AppConstants.listStatusPekerjaan,
-                      ])
-                        Padding(
-                          padding: const EdgeInsets.only(right: AppSpacing.sm),
-                          child: _FilterChipButton(
-                            label: status,
-                            selected: laporanCtrl.statusFilter == status,
-                            onTap: () {
-                              setState(() {
-                                laporanCtrl.ubahFilterStatus(status);
-                              });
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SearchFilterDropdown(
+                      value: laporanCtrl.statusFilter,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          laporanCtrl.ubahFilterStatus(value);
+                        });
+                      },
+                    ),
+                    if (_searchCtrl.text.isNotEmpty)
+                      IconButton(
+                        onPressed: () {
+                          setState(() => _searchCtrl.clear());
+                          laporanCtrl.cariLaporan('');
+                        },
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.base),
@@ -150,6 +140,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
                   : laporanCtrl.dataLaporan.isEmpty
                   ? const _EmptyLaporanState()
                   : ListView.builder(
+                      padding: EdgeInsets.zero,
                       physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: laporanCtrl.dataLaporan.length,
                       itemBuilder: (context, index) {
@@ -283,42 +274,75 @@ class _LaporanScreenState extends State<LaporanScreen> {
   }
 }
 
-class _FilterChipButton extends StatelessWidget {
-  const _FilterChipButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
+class _SearchFilterDropdown extends StatelessWidget {
+  const _SearchFilterDropdown({
+    required this.value,
+    required this.onChanged,
   });
 
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+  final String value;
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.xs),
+      child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.base,
-          vertical: AppSpacing.sm,
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primarySoft : AppColors.surfaceL1,
+          color: value != 'SEMUA' ? AppColors.primarySoft : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.borderSubtle,
-            width: selected ? 1.5 : 1,
+            color: value != 'SEMUA'
+                ? AppColors.primary
+                : AppColors.borderSubtle,
           ),
         ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: selected ? AppColors.primary : AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isDense: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: value != 'SEMUA'
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: value != 'SEMUA'
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+            onChanged: onChanged,
+            selectedItemBuilder: (context) => [
+              for (final status in <String>[
+                'SEMUA',
+                ...AppConstants.listStatusPekerjaan,
+              ])
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    status == 'SEMUA' ? 'Filter' : status,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            items: [
+              for (final status in <String>[
+                'SEMUA',
+                ...AppConstants.listStatusPekerjaan,
+              ])
+                DropdownMenuItem<String>(
+                  value: status,
+                  child: Text(status),
+                ),
+            ],
           ),
         ),
       ),
@@ -352,15 +376,16 @@ class _LaporanListItemState extends State<_LaporanListItem> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: Hero(
-        tag: 'project-card-${item.id}',
-        child: Material(
-          color: Colors.transparent,
-          child: SiraSolidCard(
-            color: _hovered ? AppColors.surfaceL2 : AppColors.surfaceL1,
-            child: InkWell(
-              onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(16),
+        child: Hero(
+          tag: 'project-card-${item.id}',
+          child: Material(
+            color: Colors.transparent,
+            child: SiraGlassCard(
+              subtle: !_hovered,
+              padding: const EdgeInsets.all(AppSpacing.base),
+              child: InkWell(
+                onTap: widget.onTap,
+                borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: EdgeInsets.zero,
                 child: Row(

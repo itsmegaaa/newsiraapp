@@ -30,6 +30,10 @@ class LaporanRepository {
     return _db.collection('sync_metadata').doc('status').snapshots();
   }
 
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamUsers() {
+    return _db.collection('users').snapshots();
+  }
+
   Stream<QuerySnapshot> streamLogs() {
     return _db
         .collection('logs_laporan')
@@ -163,6 +167,20 @@ class LaporanRepository {
 
   Stream<DocumentSnapshot> streamMasterNotaris() {
     return _db.collection('master_data').doc('notaris').snapshots();
+  }
+
+  Future<void> updateUserRole(String id, String newRole) async {
+    await _db.collection('users').doc(id).set({
+      'role': newRole,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateUserActiveStatus(String id, bool newStatus) async {
+    await _db.collection('users').doc(id).set({
+      'isActive': newStatus,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   // ==========================================================================

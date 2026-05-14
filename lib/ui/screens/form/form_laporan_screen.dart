@@ -178,7 +178,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
                           return Align(
                             alignment: Alignment.topLeft,
                             child: Material(
-                              color: AppColors.surfaceL1,
+                              color: Colors.white.withValues(alpha: 0.92),
                               borderRadius: BorderRadius.circular(16),
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
@@ -249,7 +249,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
                           return Align(
                             alignment: Alignment.topLeft,
                             child: Material(
-                              color: AppColors.surfaceL1,
+                              color: Colors.white.withValues(alpha: 0.92),
                               borderRadius: BorderRadius.circular(16),
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(

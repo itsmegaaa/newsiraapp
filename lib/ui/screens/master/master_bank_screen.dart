@@ -2,13 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../controllers/user_provider.dart';
 import '../../../data/repositories/laporan_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../layout/sira_responsive_shell.dart';
+import '../../widgets/sira_glass_card.dart';
 import '../../widgets/sira_primary_button.dart';
 import '../../widgets/sira_secondary_button.dart';
-import '../../widgets/sira_solid_card.dart';
 import '../../widgets/sira_toast.dart';
 
 class MasterBankScreen extends StatelessWidget {
@@ -16,7 +17,12 @@ class MasterBankScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProv = context.watch<UserProvider>();
     final repo = context.read<LaporanRepository>();
+
+    if (!userProv.isAdmin) {
+      return const _UnauthorizedMasterBankState();
+    }
 
     return SiraResponsiveShell(
       title: 'Master Data Bank',
@@ -44,21 +50,25 @@ class MasterBankScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.base),
-          Wrap(
-            spacing: AppSpacing.base,
-            runSpacing: AppSpacing.base,
-            children: [
-              SiraPrimaryButton(
-                label: 'Tambah Bank',
-                icon: Icons.add_rounded,
-                onPressed: () => _tampilDialogBank(context),
-              ),
-              SiraSecondaryButton(
-                label: 'Kelola Notaris',
-                icon: Icons.gavel_rounded,
-                onPressed: () => _tampilkanKelolaNotaris(context),
-              ),
-            ],
+          SiraGlassCard(
+            subtle: true,
+            padding: const EdgeInsets.all(AppSpacing.base),
+            child: Wrap(
+              spacing: AppSpacing.base,
+              runSpacing: AppSpacing.base,
+              children: [
+                SiraPrimaryButton(
+                  label: 'Tambah Bank',
+                  icon: Icons.add_rounded,
+                  onPressed: () => _tampilDialogBank(context),
+                ),
+                SiraSecondaryButton(
+                  label: 'Kelola Notaris',
+                  icon: Icons.gavel_rounded,
+                  onPressed: () => _tampilkanKelolaNotaris(context),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.xl),
           Expanded(
@@ -88,13 +98,16 @@ class MasterBankScreen extends StatelessWidget {
                 }
 
                 return ListView.separated(
+                  padding: EdgeInsets.zero,
                   itemCount: docs.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (context, index) {
                     final doc = docs[index];
                     final namaPic = doc['namaPic'].toString();
-                    return SiraSolidCard(
+                    return SiraGlassCard(
+                      subtle: true,
+                      padding: const EdgeInsets.all(AppSpacing.base),
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Container(
@@ -162,26 +175,31 @@ class MasterBankScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(doc == null ? 'Tambah Bank' : 'Edit Bank'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: bankCtrl,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
-                labelText: 'Nama KCU/KCP Bank',
-                hintText: 'Contoh: KCP GARUT CILEDUG',
-              ),
+        content: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: bankCtrl,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama KCU/KCP Bank',
+                    hintText: 'Contoh: KCP GARUT CILEDUG',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.base),
+                TextField(
+                  controller: picCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama PIC Bank',
+                    hintText: 'Masukkan nama PIC',
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.base),
-            TextField(
-              controller: picCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nama PIC Bank',
-                hintText: 'Masukkan nama PIC',
-              ),
-            ),
-          ],
+          ),
         ),
         actions: [
           TextButton(
@@ -337,6 +355,26 @@ class MasterBankScreen extends StatelessWidget {
             child: const Text('Tutup'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _UnauthorizedMasterBankState extends StatelessWidget {
+  const _UnauthorizedMasterBankState();
+
+  @override
+  Widget build(BuildContext context) {
+    return SiraResponsiveShell(
+      title: 'Master Data Bank',
+      activeMenu: SiraMenu.dashboard,
+      child: Center(
+        child: Text(
+          'Halaman master bank hanya tersedia untuk admin.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }

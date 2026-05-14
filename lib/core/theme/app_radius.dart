@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 abstract class AppRadius {
-  static const double sm = 12.0;
-  static const double md = 16.0;
-  static const double lg = 24.0;
-  static const double xl = 32.0;
-  static const double sheet = 28.0;
-  static const double button = 16.0;
+  static const double sm = 6.0;
+  static const double md = 8.0;
+  static const double lg = 12.0;
+  static const double xl = 16.0;
+  static const double sheet = 16.0;
+  static const double button = 8.0;
   static const double pill = 999.0;
 
   static final BorderRadius cardMd = BorderRadius.circular(md);

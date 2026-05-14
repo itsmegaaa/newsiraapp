@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
-import '../../core/theme/app_shadows.dart';
 
 class SiraPrimaryButton extends StatelessWidget {
   const SiraPrimaryButton({
@@ -22,53 +21,64 @@ class SiraPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDisabled = onPressed == null || isLoading;
+    final foreground = isDisabled ? AppColors.steel : AppColors.textInverse;
+
     final content = TextButton(
       onPressed: isLoading ? null : onPressed,
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        minimumSize: const Size(0, 44),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.button),
         ),
-        foregroundColor: AppColors.textInverse,
+        foregroundColor: foreground,
+        overlayColor: Colors.white.withValues(alpha: 0.08),
       ),
       child: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2.4,
-                color: AppColors.textInverse,
+                color: foreground,
               ),
             )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 18, color: AppColors.textInverse),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textInverse,
-                    fontWeight: FontWeight.w600,
-                  ),
+          : LayoutBuilder(
+              builder: (context, constraints) => ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 18, color: foreground),
+                      const SizedBox(width: 8),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: foreground,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
     );
 
     final button = Container(
       width: expanded ? double.infinity : null,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDisabled ? AppColors.hairline : AppColors.primary,
         borderRadius: BorderRadius.circular(AppRadius.button),
-        boxShadow: AppShadows.primaryGlow,
+        border: Border.all(color: AppColors.primary),
       ),
       child: content,
     );

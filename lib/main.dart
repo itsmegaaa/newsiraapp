@@ -76,6 +76,8 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProv = context.watch<UserProvider>();
+
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
@@ -86,11 +88,74 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
+          if (!userProv.isActive) {
+            return const InactiveAccountScreen();
+          }
           return const HomeScreen();
         }
 
         return const LoginScreen();
       },
+    );
+  }
+}
+
+class InactiveAccountScreen extends StatelessWidget {
+  const InactiveAccountScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final userProv = context.watch<UserProvider>();
+
+    return Scaffold(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.block_outlined,
+                      size: 52,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Akun Dinonaktifkan',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Akun ${userProv.email.isEmpty ? 'ini' : userProv.email} sedang dinonaktifkan. Hubungi administrator untuk mengaktifkannya kembali.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: () async {
+                        await userProv.logout();
+                        if (!context.mounted) return;
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      child: const Text('Keluar'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

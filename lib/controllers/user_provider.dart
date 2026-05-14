@@ -7,7 +7,10 @@ class UserProvider extends ChangeNotifier {
   User? _currentUser;
   String _role = 'STAFF'; // Default fallback
   String _nama = '';
+  bool _isActive = true;
   StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+  _userDocSubscription;
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -23,7 +26,8 @@ class UserProvider extends ChangeNotifier {
   User? get currentUser => _currentUser;
   String get role => _role;
   String get nama => _nama;
-  bool get isAdmin => _role == 'ADMIN';
+  bool get isAdmin => _isActive && _role == 'ADMIN';
+  bool get isActive => _isActive;
   String get email => _currentUser?.email ?? '';
 
   // ==========================================================================
@@ -33,12 +37,14 @@ class UserProvider extends ChangeNotifier {
   void _initAuthListener() {
     _authSubscription = _auth.authStateChanges().listen((User? user) async {
       _currentUser = user;
+      await _userDocSubscription?.cancel();
 
       if (user != null && user.email != null) {
-        await _fetchUserData(user.email!);
+        _watchUserData(user.email!);
       } else {
         _role = 'STAFF';
         _nama = '';
+        _isActive = true;
       }
 
       notifyListeners();
@@ -49,24 +55,33 @@ class UserProvider extends ChangeNotifier {
   // FETCH FIRESTORE USER DATA
   // ==========================================================================
 
-  Future<void> _fetchUserData(String email) async {
-    try {
-      final doc = await _db.collection('users').doc(email).get();
-
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        _role = data['role'] as String? ?? 'STAFF';
-        _nama = data['nama'] as String? ?? 'User Tidak Dikenal';
-      } else {
-        // Jika dokumen tidak ada, kita buatkan data default agar aplikasi tidak crash
-        _role = 'STAFF';
-        _nama = email.split('@').first; // Ambil nama dari email sementara
-      }
-    } catch (e) {
-      debugPrint('Error fetching user data: $e');
-      _role = 'STAFF';
-      _nama = email.split('@').first;
-    }
+  void _watchUserData(String email) {
+    _userDocSubscription = _db
+        .collection('users')
+        .doc(email)
+        .snapshots()
+        .listen(
+          (doc) {
+            if (doc.exists && doc.data() != null) {
+              final data = doc.data()!;
+              _role = (data['role'] as String? ?? 'STAFF').toUpperCase();
+              _nama = data['nama'] as String? ?? 'User Tidak Dikenal';
+              _isActive = data['isActive'] as bool? ?? true;
+            } else {
+              _role = 'STAFF';
+              _nama = email.split('@').first;
+              _isActive = true;
+            }
+            notifyListeners();
+          },
+          onError: (error) {
+            debugPrint('Error fetching user data: $error');
+            _role = 'STAFF';
+            _nama = email.split('@').first;
+            _isActive = true;
+            notifyListeners();
+          },
+        );
   }
 
   // ==========================================================================
@@ -78,12 +93,14 @@ class UserProvider extends ChangeNotifier {
     _currentUser = null;
     _role = 'STAFF';
     _nama = '';
+    _isActive = true;
     notifyListeners();
   }
 
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _userDocSubscription?.cancel();
     super.dispose();
   }
 }

@@ -1,16 +1,15 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/user_provider.dart';
 import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../navigation/sira_page_route.dart';
+import '../screens/admin/admin_panel_screen.dart';
+import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/laporan_screen.dart';
-import '../screens/dashboard/log_screen.dart';
-import '../screens/master/master_bank_screen.dart';
 import '../screens/portal/home_screen.dart';
 import '../widgets/sira_page_background.dart';
 import 'sira_mobile_drawer.dart';
@@ -41,15 +40,29 @@ class SiraResponsiveShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>();
-    final isMobile = MediaQuery.of(context).size.width < AppBreakpoints.mobile;
+    final size = MediaQuery.of(context).size;
+    final isMobile = size.width < AppBreakpoints.mobile;
+    final contentChild = isMobile
+        ? MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: child,
+          )
+        : child;
     final shellPadding = isMobile
         ? const EdgeInsets.fromLTRB(
             AppSpacing.base,
-            AppSpacing.base + kToolbarHeight,
+            AppSpacing.base,
             AppSpacing.base,
             AppSpacing.base,
           )
-        : (contentPadding ?? const EdgeInsets.all(AppSpacing.xl));
+        : (contentPadding ??
+              const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.lg,
+              ));
 
     final body = Stack(
       children: [
@@ -65,7 +78,7 @@ class SiraResponsiveShell extends StatelessWidget {
                   userRole: user.role,
                   isAdmin: user.isAdmin,
                   onMenuTap: (menu) => _openMenu(context, menu),
-                  onLogoutTap: user.logout,
+                  onLogoutTap: () => _handleLogout(context),
                 ),
               Expanded(
                 child: Align(
@@ -74,7 +87,14 @@ class SiraResponsiveShell extends StatelessWidget {
                     constraints: BoxConstraints(
                       maxWidth: maxContentWidth ?? double.infinity,
                     ),
-                    child: Padding(padding: shellPadding, child: child),
+                    child: Padding(
+                      padding: shellPadding,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        child: contentChild,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -85,8 +105,8 @@ class SiraResponsiveShell extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
+      backgroundColor: AppColors.surface,
+      extendBodyBehindAppBar: false,
       appBar: isMobile ? _buildAppBar(context) : null,
       drawer: isMobile
           ? SiraMobileDrawer(
@@ -98,7 +118,7 @@ class SiraResponsiveShell extends StatelessWidget {
                 Navigator.of(context).pop();
                 _openMenu(context, menu);
               },
-              onLogoutTap: user.logout,
+              onLogoutTap: () => _handleLogout(context),
             )
           : null,
       floatingActionButton: floatingActionButton,
@@ -107,24 +127,23 @@ class SiraResponsiveShell extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
     return AppBar(
       title: Text(title),
       centerTitle: false,
       actions: actions,
-      flexibleSpace: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.glassFill,
-              border: Border(
-                bottom: BorderSide(color: AppColors.borderSubtle, width: 0.5),
-              ),
-            ),
+      toolbarHeight: width < AppBreakpoints.mobile ? 64 : kToolbarHeight,
+      flexibleSpace: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(AppRadius.lg),
           ),
+          border: const Border(bottom: BorderSide(color: AppColors.hairline)),
         ),
       ),
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.surfaceCard,
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: 0,
       elevation: 0,
@@ -133,14 +152,36 @@ class SiraResponsiveShell extends StatelessWidget {
 
   void _openMenu(BuildContext context, SiraMenu menu) {
     if (menu == activeMenu) return;
+    final user = context.read<UserProvider>();
     final route = switch (menu) {
       SiraMenu.dashboard => const HomeScreen(),
       SiraMenu.laporan => const LaporanScreen(),
-      SiraMenu.masterBank => const MasterBankScreen(),
-      SiraMenu.log => const LogScreen(),
+      SiraMenu.adminPanel =>
+        user.isAdmin ? const AdminPanelScreen() : const HomeScreen(),
+      SiraMenu.masterBank =>
+        user.isAdmin ? const AdminPanelScreen() : const HomeScreen(),
+      SiraMenu.log => user.isAdmin ? const AdminPanelScreen() : const HomeScreen(),
     };
     Navigator.of(
       context,
     ).pushAndRemoveUntil(SiraPageRoute(child: route), (route) => false);
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final scaffold = Scaffold.maybeOf(context);
+    final user = context.read<UserProvider>();
+
+    if (scaffold?.isDrawerOpen ?? false) {
+      navigator.pop();
+    }
+
+    await user.logout();
+    if (!context.mounted) return;
+
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 }

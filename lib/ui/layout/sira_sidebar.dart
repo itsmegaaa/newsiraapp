@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
+import '../widgets/sira_glass_card.dart';
 
-enum SiraMenu { dashboard, laporan, masterBank, log }
+enum SiraMenu { dashboard, laporan, adminPanel, masterBank, log }
 
 class SiraSidebar extends StatelessWidget {
   const SiraSidebar({
@@ -26,129 +27,137 @@ class SiraSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceL1,
-        border: Border(right: BorderSide(color: AppColors.borderSubtle)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.base,
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.base),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.base),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.cardXl,
+          border: Border.all(color: AppColors.hairline),
+          color: AppColors.surfaceSoft,
+        ),
+        child: SafeArea(
+          child: SiraGlassCard(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            borderRadius: AppRadius.cardXl,
+            tone: SiraGlassTone.panel,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SiraGlassCard(
+                  tone: SiraGlassTone.metric,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.base,
+                  ),
                   borderRadius: AppRadius.cardLg,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SIRA',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        fontSize: 22,
-                        color: AppColors.primary,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SIRA',
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                            ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Projects dashboard',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              _SidebarItem(
-                icon: Icons.dashboard_outlined,
-                label: 'Dashboard',
-                isActive: activeMenu == SiraMenu.dashboard,
-                onTap: () => onMenuTap(SiraMenu.dashboard),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _SidebarItem(
-                icon: Icons.folder_open_outlined,
-                label: 'Laporan',
-                isActive: activeMenu == SiraMenu.laporan,
-                onTap: () => onMenuTap(SiraMenu.laporan),
-              ),
-              if (isAdmin) ...[
-                const SizedBox(height: AppSpacing.sm),
-                _SidebarItem(
-                  icon: Icons.account_balance_outlined,
-                  label: 'Master Bank',
-                  isActive: activeMenu == SiraMenu.masterBank,
-                  onTap: () => onMenuTap(SiraMenu.masterBank),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                _SidebarItem(
-                  icon: Icons.history_outlined,
-                  label: 'Log Aktivitas',
-                  isActive: activeMenu == SiraMenu.log,
-                  onTap: () => onMenuTap(SiraMenu.log),
-                ),
-              ],
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.base),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceL2,
-                  borderRadius: AppRadius.cardMd,
-                  border: Border.all(color: AppColors.borderSubtle),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Projects dashboard',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      child: const Icon(
-                        Icons.person_outline,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            userName.isEmpty ? 'Pengguna' : userName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            userRole,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextButton.icon(
-                onPressed: onLogoutTap,
-                icon: const Icon(Icons.logout_rounded, color: AppColors.error),
-                label: Text(
-                  'Keluar',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.error,
-                    fontWeight: FontWeight.w600,
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.lg),
+                _SidebarItem(
+                  icon: Icons.dashboard_outlined,
+                  label: 'Dashboard',
+                  isActive: activeMenu == SiraMenu.dashboard,
+                  onTap: () => onMenuTap(SiraMenu.dashboard),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _SidebarItem(
+                  icon: Icons.folder_open_outlined,
+                  label: 'Laporan',
+                  isActive: activeMenu == SiraMenu.laporan,
+                  onTap: () => onMenuTap(SiraMenu.laporan),
+                ),
+                if (isAdmin) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  _SidebarItem(
+                    icon: Icons.admin_panel_settings_outlined,
+                    label: 'Admin Panel',
+                    isActive: activeMenu == SiraMenu.adminPanel,
+                    onTap: () => onMenuTap(SiraMenu.adminPanel),
+                  ),
+                ],
+                const Spacer(),
+                SiraGlassCard(
+                  tone: SiraGlassTone.metric,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  borderRadius: AppRadius.cardMd,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.person_outline,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userName.isEmpty ? 'Pengguna' : userName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              userRole,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                TextButton.icon(
+                  onPressed: onLogoutTap,
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    color: AppColors.error,
+                  ),
+                  label: Text(
+                    'Keluar',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -181,7 +190,7 @@ class _SidebarItemState extends State<_SidebarItem> {
     final background = widget.isActive
         ? AppColors.primarySoft
         : _hovered
-        ? AppColors.surfaceL3
+        ? AppColors.surface
         : Colors.transparent;
     final foreground = widget.isActive
         ? AppColors.primary
@@ -196,14 +205,21 @@ class _SidebarItemState extends State<_SidebarItem> {
         decoration: BoxDecoration(
           color: background,
           borderRadius: AppRadius.cardMd,
+          border: Border.all(
+            color: widget.isActive
+                ? AppColors.primary.withValues(alpha: 0.18)
+                : Colors.transparent,
+          ),
         ),
         child: ListTile(
+          dense: true,
+          visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.cardMd),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.base,
-            vertical: AppSpacing.sm,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xs,
           ),
-          leading: Icon(widget.icon, color: foreground),
+          leading: Icon(widget.icon, color: foreground, size: 20),
           title: Text(
             widget.label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

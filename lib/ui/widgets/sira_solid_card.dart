@@ -24,10 +24,10 @@ class SiraSolidCard extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? AppColors.surfaceL1,
+        color: color ?? AppColors.surfaceCard,
         borderRadius: borderRadius ?? AppRadius.cardMd,
-        border: Border.all(color: AppColors.borderSubtle),
-        boxShadow: AppShadows.subtle,
+        border: Border.all(color: AppColors.hairline),
+        boxShadow: AppShadows.none,
       ),
       child: child,
     );

@@ -3,18 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../controllers/user_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../data/repositories/laporan_repository.dart';
 import '../../layout/sira_responsive_shell.dart';
-import '../../widgets/sira_solid_card.dart';
+import '../../widgets/sira_glass_card.dart';
 
 class LogScreen extends StatelessWidget {
   const LogScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final userProv = context.watch<UserProvider>();
     final repo = context.read<LaporanRepository>();
+
+    if (!userProv.isAdmin) {
+      return const _UnauthorizedLogState();
+    }
 
     return SiraResponsiveShell(
       title: 'Riwayat Aktivitas',
@@ -45,6 +51,7 @@ class LogScreen extends StatelessWidget {
           }
 
           return ListView.separated(
+            padding: EdgeInsets.zero,
             itemCount: logs.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
@@ -53,6 +60,26 @@ class LogScreen extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class _UnauthorizedLogState extends StatelessWidget {
+  const _UnauthorizedLogState();
+
+  @override
+  Widget build(BuildContext context) {
+    return SiraResponsiveShell(
+      title: 'Riwayat Aktivitas',
+      activeMenu: SiraMenu.dashboard,
+      child: Center(
+        child: Text(
+          'Halaman log hanya tersedia untuk admin.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }
@@ -71,7 +98,9 @@ class _LogCard extends StatelessWidget {
     final waktu = data['waktu'] as Timestamp?;
     final semantic = _semanticForAction(aksi);
 
-    return SiraSolidCard(
+    return SiraGlassCard(
+      subtle: true,
+      padding: const EdgeInsets.all(AppSpacing.base),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

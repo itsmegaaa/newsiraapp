@@ -39,7 +39,8 @@ class SiraStatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: softColor,
-        borderRadius: AppRadius.btnPill,
+        borderRadius: AppRadius.inputSm,
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         status.isEmpty ? '-' : status,
