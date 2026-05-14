@@ -39,7 +39,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     final userProv = context.watch<UserProvider>();
     final repo = context.read<LaporanRepository>();
     final laporanCtrl = context.read<LaporanController>();
+    final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = MediaQuery.of(context).size.width >= 980;
+    final isMobile = screenWidth < 640;
 
     if (!userProv.isAdmin) {
       return const _UnauthorizedAdminScreen();
@@ -82,35 +84,60 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    Wrap(
-                      spacing: AppSpacing.base,
-                      runSpacing: AppSpacing.base,
-                      children: [
-                        _AdminOverviewTile(
-                          label: 'Total Pengguna',
-                          value: docs.length.toString(),
-                          icon: Icons.groups_2_outlined,
-                        ),
-                        _AdminOverviewTile(
-                          label: 'Pengguna Aktif',
-                          value: activeUsers.toString(),
-                          icon: Icons.verified_user_outlined,
-                        ),
-                        _AdminOverviewTile(
-                          label: 'Admin Aktif',
-                          value: activeAdminCount.toString(),
-                          icon: Icons.admin_panel_settings_outlined,
-                        ),
-                      ],
-                    ),
+                    if (isMobile)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _AdminOverviewTile(
+                            label: 'Total Pengguna',
+                            value: docs.length.toString(),
+                            icon: Icons.groups_2_outlined,
+                            fullWidth: true,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          _AdminOverviewTile(
+                            label: 'Pengguna Aktif',
+                            value: activeUsers.toString(),
+                            icon: Icons.verified_user_outlined,
+                            fullWidth: true,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          _AdminOverviewTile(
+                            label: 'Admin Aktif',
+                            value: activeAdminCount.toString(),
+                            icon: Icons.admin_panel_settings_outlined,
+                            fullWidth: true,
+                          ),
+                        ],
+                      )
+                    else
+                      Wrap(
+                        spacing: AppSpacing.base,
+                        runSpacing: AppSpacing.base,
+                        children: [
+                          _AdminOverviewTile(
+                            label: 'Total Pengguna',
+                            value: docs.length.toString(),
+                            icon: Icons.groups_2_outlined,
+                          ),
+                          _AdminOverviewTile(
+                            label: 'Pengguna Aktif',
+                            value: activeUsers.toString(),
+                            icon: Icons.verified_user_outlined,
+                          ),
+                          _AdminOverviewTile(
+                            label: 'Admin Aktif',
+                            value: activeAdminCount.toString(),
+                            icon: Icons.admin_panel_settings_outlined,
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: AppSpacing.lg),
-                    Wrap(
-                      spacing: AppSpacing.base,
-                      runSpacing: AppSpacing.base,
-                      children: [
-                        SizedBox(
-                          width: isDesktop ? 220 : 180,
-                          child: SiraPrimaryButton(
+                    if (isMobile)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SiraPrimaryButton(
                             label: 'Sync Manual',
                             icon: Icons.sync_rounded,
                             onPressed: () => _showSyncDialog(
@@ -118,27 +145,61 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                               userProv.email,
                               laporanCtrl,
                             ),
-                            expanded: !isDesktop,
+                            expanded: true,
                           ),
-                        ),
-                        SizedBox(
-                          width: isDesktop ? 180 : 168,
-                          child: SiraPrimaryButton(
+                          const SizedBox(height: AppSpacing.sm),
+                          SiraPrimaryButton(
                             label: 'Tambah Bank',
                             icon: Icons.add_rounded,
                             onPressed: () => _tampilDialogBank(context),
+                            expanded: true,
                           ),
-                        ),
-                        SizedBox(
-                          width: isDesktop ? 190 : 176,
-                          child: SiraSecondaryButton(
-                            label: 'Kelola Notaris',
-                            icon: Icons.gavel_rounded,
-                            onPressed: () => _tampilkanKelolaNotaris(context),
+                          const SizedBox(height: AppSpacing.sm),
+                          SizedBox(
+                            width: double.infinity,
+                            child: SiraSecondaryButton(
+                              label: 'Kelola Notaris',
+                              icon: Icons.gavel_rounded,
+                              onPressed: () => _tampilkanKelolaNotaris(context),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      )
+                    else
+                      Wrap(
+                        spacing: AppSpacing.base,
+                        runSpacing: AppSpacing.base,
+                        children: [
+                          SizedBox(
+                            width: 220,
+                            child: SiraPrimaryButton(
+                              label: 'Sync Manual',
+                              icon: Icons.sync_rounded,
+                              onPressed: () => _showSyncDialog(
+                                context,
+                                userProv.email,
+                                laporanCtrl,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 180,
+                            child: SiraPrimaryButton(
+                              label: 'Tambah Bank',
+                              icon: Icons.add_rounded,
+                              onPressed: () => _tampilDialogBank(context),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 190,
+                            child: SiraSecondaryButton(
+                              label: 'Kelola Notaris',
+                              icon: Icons.gavel_rounded,
+                              onPressed: () => _tampilkanKelolaNotaris(context),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 );
               },
@@ -166,35 +227,69 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    Wrap(
-                      spacing: AppSpacing.base,
-                      runSpacing: AppSpacing.base,
-                      children: [
-                        _AdminMetric(
-                          label: 'Status Sync',
-                          value: isSyncing ? 'Sedang berjalan' : 'Siap',
-                          icon: isSyncing
-                              ? Icons.sync_rounded
-                              : Icons.verified_outlined,
-                        ),
-                        _AdminMetric(
-                          label: 'Sync Terakhir',
-                          value: lastSync == null
-                              ? 'Belum ada'
-                              : DateFormat(
-                                  'dd MMM yyyy, HH:mm',
-                                ).format(lastSync.toDate()),
-                          icon: Icons.schedule_outlined,
-                        ),
-                        _AdminMetric(
-                          label: 'Error Terakhir',
-                          value: (lastError == null || lastError.isEmpty)
-                              ? 'Tidak ada'
-                              : lastError,
-                          icon: Icons.report_gmailerrorred_outlined,
-                        ),
-                      ],
-                    ),
+                    if (isMobile)
+                      Column(
+                        children: [
+                          _AdminMetric(
+                            label: 'Status Sync',
+                            value: isSyncing ? 'Sedang berjalan' : 'Siap',
+                            icon: isSyncing
+                                ? Icons.sync_rounded
+                                : Icons.verified_outlined,
+                            fullWidth: true,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          _AdminMetric(
+                            label: 'Sync Terakhir',
+                            value: lastSync == null
+                                ? 'Belum ada'
+                                : DateFormat(
+                                    'dd MMM yyyy, HH:mm',
+                                  ).format(lastSync.toDate()),
+                            icon: Icons.schedule_outlined,
+                            fullWidth: true,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          _AdminMetric(
+                            label: 'Error Terakhir',
+                            value: (lastError == null || lastError.isEmpty)
+                                ? 'Tidak ada'
+                                : lastError,
+                            icon: Icons.report_gmailerrorred_outlined,
+                            fullWidth: true,
+                          ),
+                        ],
+                      )
+                    else
+                      Wrap(
+                        spacing: AppSpacing.base,
+                        runSpacing: AppSpacing.base,
+                        children: [
+                          _AdminMetric(
+                            label: 'Status Sync',
+                            value: isSyncing ? 'Sedang berjalan' : 'Siap',
+                            icon: isSyncing
+                                ? Icons.sync_rounded
+                                : Icons.verified_outlined,
+                          ),
+                          _AdminMetric(
+                            label: 'Sync Terakhir',
+                            value: lastSync == null
+                                ? 'Belum ada'
+                                : DateFormat(
+                                    'dd MMM yyyy, HH:mm',
+                                  ).format(lastSync.toDate()),
+                            icon: Icons.schedule_outlined,
+                          ),
+                          _AdminMetric(
+                            label: 'Error Terakhir',
+                            value: (lastError == null || lastError.isEmpty)
+                                ? 'Tidak ada'
+                                : lastError,
+                            icon: Icons.report_gmailerrorred_outlined,
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               );
@@ -252,7 +347,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 });
 
               return SizedBox(
-                height: isDesktop ? 560 : 760,
+                height: isDesktop ? 560 : 620,
                 child: SiraGlassCard(
                   subtle: true,
                   padding: const EdgeInsets.all(AppSpacing.base),
@@ -272,14 +367,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.base),
-                      Wrap(
-                        spacing: AppSpacing.base,
-                        runSpacing: AppSpacing.base,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: isDesktop ? 320 : 280,
-                            child: TextField(
+                      if (isMobile)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextField(
                               controller: _searchCtrl,
                               onChanged: (value) {
                                 setState(() {
@@ -292,10 +384,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                                 prefixIcon: Icon(Icons.search_rounded),
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 220,
-                            child: DropdownButtonFormField<String>(
+                            const SizedBox(height: AppSpacing.sm),
+                            DropdownButtonFormField<String>(
                               initialValue: _roleFilter,
                               decoration: const InputDecoration(
                                 labelText: 'Filter role',
@@ -325,9 +415,65 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                                 });
                               },
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        )
+                      else
+                        Wrap(
+                          spacing: AppSpacing.base,
+                          runSpacing: AppSpacing.base,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 320,
+                              child: TextField(
+                                controller: _searchCtrl,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value.trim().toLowerCase();
+                                  });
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Cari pengguna',
+                                  hintText: 'Nama atau email',
+                                  prefixIcon: Icon(Icons.search_rounded),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 220,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _roleFilter,
+                                decoration: const InputDecoration(
+                                  labelText: 'Filter role',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'SEMUA',
+                                    child: Text('Semua'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ADMIN',
+                                    child: Text('Admin'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'STAFF',
+                                    child: Text('Staff'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'VIEWER',
+                                    child: Text('Viewer'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() {
+                                    _roleFilter = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       const SizedBox(height: AppSpacing.base),
                       if (isDesktop) const _UserTableHeader(),
                       if (isDesktop) const SizedBox(height: AppSpacing.sm),
@@ -781,7 +927,7 @@ class _InlineMasterBankSection extends StatelessWidget {
     final isDesktop = MediaQuery.of(context).size.width >= 980;
 
     return SizedBox(
-      height: isDesktop ? 520 : 640,
+      height: isDesktop ? 520 : 420,
       child: SiraGlassCard(
         subtle: true,
         padding: const EdgeInsets.all(AppSpacing.base),
@@ -925,7 +1071,7 @@ class _InlineLogSection extends StatelessWidget {
     final isDesktop = MediaQuery.of(context).size.width >= 980;
 
     return SizedBox(
-      height: isDesktop ? 520 : 620,
+      height: isDesktop ? 520 : 420,
       child: SiraGlassCard(
         subtle: true,
         padding: const EdgeInsets.all(AppSpacing.base),
@@ -1592,16 +1738,20 @@ class _AdminMetric extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
+    this.fullWidth = false,
   });
 
   final String label;
   final String value;
   final IconData icon;
+  final bool fullWidth;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 210, maxWidth: 320),
+      constraints: fullWidth
+          ? const BoxConstraints(minWidth: 0, maxWidth: double.infinity)
+          : const BoxConstraints(minWidth: 210, maxWidth: 320),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,
@@ -1655,16 +1805,18 @@ class _AdminOverviewTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
+    this.fullWidth = false,
   });
 
   final String label;
   final String value;
   final IconData icon;
+  final bool fullWidth;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 180,
+      width: fullWidth ? double.infinity : 180,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surfaceSoft,

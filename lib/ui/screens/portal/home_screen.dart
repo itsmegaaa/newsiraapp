@@ -102,12 +102,12 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             GridView.count(
-              crossAxisCount: isDesktop ? 3 : 2,
+              crossAxisCount: 3,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: isDesktop ? AppSpacing.sm : AppSpacing.sm,
-              mainAxisSpacing: isDesktop ? AppSpacing.sm : AppSpacing.sm,
-              childAspectRatio: isDesktop ? 2.7 : 2.25,
+              crossAxisSpacing: AppSpacing.sm,
+              mainAxisSpacing: AppSpacing.sm,
+              childAspectRatio: isDesktop ? 2.8 : 1.35,
               children: [
                 _MetricCard(
                   label: 'Proses',
@@ -121,13 +121,12 @@ class HomeScreen extends StatelessWidget {
                   color: AppColors.warning,
                   icon: Icons.schedule_outlined,
                 ),
-                if (isDesktop)
-                  _MetricCard(
-                    label: 'Bermasalah',
-                    value: laporanCtrl.totalBermasalah.toString(),
-                    color: AppColors.error,
-                    icon: Icons.report_problem_outlined,
-                  ),
+                _MetricCard(
+                  label: 'Bermasalah',
+                  value: laporanCtrl.totalBermasalah.toString(),
+                  color: AppColors.error,
+                  icon: Icons.report_problem_outlined,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -473,68 +472,61 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompactMobile = MediaQuery.of(context).size.width < 420;
-    final isWideScreen = MediaQuery.of(context).size.width >= AppBreakpoints.mobile;
+    final isWideScreen =
+        MediaQuery.of(context).size.width >= AppBreakpoints.mobile;
 
-    return SiraGlassCard(
-      tone: SiraGlassTone.metric,
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompactMobile ? AppSpacing.sm : (isWideScreen ? 10 : AppSpacing.md),
-        vertical: isCompactMobile ? 10 : (isWideScreen ? 8 : AppSpacing.sm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: isCompactMobile ? 30 : (isWideScreen ? 30 : 36),
-            height: isCompactMobile ? 30 : (isWideScreen ? 30 : 36),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  color.withValues(alpha: 0.22),
-                  color.withValues(alpha: 0.10),
-                ],
+    return Semantics(
+      label: '$label $value',
+      child: SiraGlassCard(
+        tone: SiraGlassTone.metric,
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompactMobile ? AppSpacing.xs : AppSpacing.sm,
+          vertical: isCompactMobile ? AppSpacing.sm : 10,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: isCompactMobile ? 30 : (isWideScreen ? 32 : 36),
+              height: isCompactMobile ? 30 : (isWideScreen ? 32 : 36),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    color.withValues(alpha: 0.22),
+                    color.withValues(alpha: 0.10),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(
+                  isCompactMobile ? 10 : 12,
+                ),
+                border: Border.all(color: color.withValues(alpha: 0.14)),
               ),
-              borderRadius: BorderRadius.circular(isCompactMobile ? 8 : (isWideScreen ? 9 : 10)),
-              border: Border.all(color: color.withValues(alpha: 0.14)),
+              child: Icon(
+                icon,
+                color: color,
+                size: isCompactMobile ? 15 : (isWideScreen ? 16 : 18),
+              ),
             ),
-            child: Icon(icon, color: color, size: isCompactMobile ? 15 : (isWideScreen ? 15 : 18)),
-          ),
-          SizedBox(width: isCompactMobile ? AppSpacing.xs : AppSpacing.sm),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontSize: isCompactMobile ? 18 : (isWideScreen ? 18 : 22),
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    height: 1.0,
-                  ),
+            SizedBox(width: isCompactMobile ? AppSpacing.xs : AppSpacing.sm),
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: isCompactMobile ? 18 : (isWideScreen ? 19 : 22),
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  height: 1.0,
                 ),
-                SizedBox(height: isCompactMobile ? 1 : 2),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w700,
-                    height: 1.05,
-                    fontSize: isCompactMobile ? 11 : (isWideScreen ? 11 : null),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
