@@ -74,10 +74,11 @@ class _CustomExpandableFabState extends State<CustomExpandableFab>
     );
   }
 
-  Widget _buildAction(
-      {required IconData icon,
-      required String label,
-      required VoidCallback onTap}) {
+  Widget _buildAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SizeTransition(
@@ -90,8 +91,10 @@ class _CustomExpandableFabState extends State<CustomExpandableFab>
             Material(
               color: Colors.transparent,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isDark ? AppConstants.darkSurface : Colors.white,
                   borderRadius: BorderRadius.circular(8),

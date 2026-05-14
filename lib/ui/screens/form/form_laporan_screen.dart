@@ -1,16 +1,19 @@
-// ignore_for_file: deprecated_member_use, use_build_context_synchronously
-
-import 'dart:ui'; // Tambahan wajib untuk efek blur kaca (Glassmorphism)
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_constants.dart';
-import '../../../core/utils/globals.dart';
 import '../../../controllers/form_laporan_controller.dart';
 import '../../../controllers/user_provider.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_breakpoints.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/globals.dart';
 import '../../../data/repositories/laporan_repository.dart';
+import '../../layout/sira_responsive_shell.dart';
+import '../../widgets/sira_primary_button.dart';
+import '../../widgets/sira_solid_card.dart';
+import '../../widgets/sira_toast.dart';
 
 class FormLaporanScreen extends StatefulWidget {
   const FormLaporanScreen({super.key});
@@ -22,6 +25,7 @@ class FormLaporanScreen extends StatefulWidget {
 class _FormLaporanScreenState extends State<FormLaporanScreen> {
   final _formKey = GlobalKey<FormState>();
   List<String> _listNotaris = [];
+  String _saveError = '';
 
   @override
   void initState() {
@@ -32,32 +36,24 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
   Future<void> _muatMasterNotaris() async {
     final repo = context.read<LaporanRepository>();
     final data = await repo.getMasterNotaris();
+    if (!mounted) return;
     setState(() {
       _listNotaris = data;
     });
   }
 
-  // Helper Pemilihan Tanggal
-  Future<void> _pilihTanggal(BuildContext context, DateTime? initialDate,
-      Function(DateTime) onSelected) async {
+  Future<void> _pilihTanggal(
+    BuildContext context,
+    DateTime? initialDate,
+    Function(DateTime) onSelected,
+  ) async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       builder: (context, child) {
-        // Disesuaikan agar kalender tampil elegan di tema gelap
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppConstants.goldColor,
-              onPrimary: Colors.black,
-              surface: Color(0xFF1E293B),
-              onSurface: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
+        return Theme(data: Theme.of(context), child: child!);
       },
     );
 
@@ -66,670 +62,645 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
     }
   }
 
-  void _simpan(BuildContext context) async {
+  Future<void> _simpan() async {
     if (!_formKey.currentState!.validate()) return;
+
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _saveError = '';
+    });
 
     final userProv = context.read<UserProvider>();
     final ctrl = context.read<FormLaporanController>();
-
-    FocusScope.of(context).unfocus();
-
     final sukses = await ctrl.simpanData(userProv.email);
 
-    if (sukses && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Data berhasil disimpan!'),
-            backgroundColor: Colors.green),
+    if (!mounted) return;
+    if (sukses) {
+      SiraToast.show(
+        context,
+        type: SiraToastType.success,
+        message: 'Data berhasil disimpan.',
       );
-      Navigator.pop(context);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Gagal menyimpan data. Periksa koneksi internet Anda.'),
-            backgroundColor: Colors.redAccent),
-      );
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _saveError = 'Gagal menyimpan data. Periksa koneksi lalu coba lagi.';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<FormLaporanController>();
+    final isDesktop =
+        MediaQuery.of(context).size.width >= AppBreakpoints.mobile;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true, // Biarkan background memanjang ke atas
-      appBar: AppBar(
-        backgroundColor: Colors.transparent, // AppBar Transparan
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          ctrl.isEditMode ? 'EDIT LAPORAN' : 'TAMBAH LAPORAN',
-          style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1),
-        ),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          // =========================================================
-          // BACKGROUND DARK GRADIENT (Glassmorphism Base)
-          // =========================================================
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF0F172A), Color(0xFF020617)],
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: ctrl.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                        color: AppConstants.goldColor))
-                : SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.all(20),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          // =========================================================
-                          // BAGIAN 1: INFORMASI UMUM
-                          // =========================================================
-                          _buildGlassSection(
-                            title: 'INFORMASI UMUM',
-                            icon: Icons.person_outline,
-                            children: [
-                              _buildLabel('Nama Debitur (Wajib)'),
-                              _buildGlassField(
-                                controller: ctrl.namaDebiturCtrl,
-                                hint: 'Masukkan nama debitur',
-                                validator: (val) =>
-                                    val == null || val.trim().isEmpty
-                                        ? 'Tidak boleh kosong'
-                                        : null,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Nama Notaris'),
-                              Autocomplete<String>(
-                                optionsBuilder:
-                                    (TextEditingValue textEditingValue) {
-                                  if (textEditingValue.text.isEmpty) {
-                                    return const Iterable<String>.empty();
-                                  }
-                                  return _listNotaris.where((option) => option
-                                      .toLowerCase()
-                                      .contains(
-                                          textEditingValue.text.toLowerCase()));
-                                },
-                                onSelected: (String selection) =>
-                                    ctrl.setNamaNotaris(selection),
-                                fieldViewBuilder: (context,
-                                    textEditingController,
-                                    focusNode,
-                                    onFieldSubmitted) {
-                                  if (ctrl.namaNotarisCtrl.text.isNotEmpty &&
-                                      textEditingController.text.isEmpty) {
-                                    textEditingController.text =
-                                        ctrl.namaNotarisCtrl.text;
-                                  }
-                                  return _buildGlassField(
-                                    controller: textEditingController,
-                                    hint: 'Pilih atau ketik nama notaris',
-                                    focusNode: focusNode,
-                                    onChanged: (val) {
-                                      ctrl.namaNotarisCtrl.text = val;
-                                    },
-                                  );
-                                },
-                                // UI Custom agar Dropdown Autocomplete berwarna gelap
-                                optionsViewBuilder:
-                                    (context, onSelected, options) {
-                                  return Align(
-                                    alignment: Alignment.topLeft,
-                                    child: Material(
-                                      color: const Color(0xFF1E293B),
-                                      elevation: 4.0,
-                                      borderRadius: BorderRadius.circular(15),
-                                      child: SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width -
-                                                80,
-                                        child: ListView.builder(
-                                          padding: const EdgeInsets.all(8.0),
-                                          shrinkWrap: true,
-                                          itemCount: options.length,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            final String option =
-                                                options.elementAt(index);
-                                            return ListTile(
-                                              title: Text(option,
-                                                  style: const TextStyle(
-                                                      color: Colors.white)),
-                                              onTap: () => onSelected(option),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('KCU/KCP (Bank)'),
-                              Autocomplete<Map<String, dynamic>>(
-                                optionsBuilder:
-                                    (TextEditingValue textEditingValue) {
-                                  if (textEditingValue.text.isEmpty) {
-                                    return const Iterable<
-                                        Map<String, dynamic>>.empty();
-                                  }
-                                  return ctrl.listMasterBank.where((option) {
-                                    final namaBank = option['namaBank']
-                                        .toString()
-                                        .toLowerCase();
-                                    return namaBank.contains(
-                                        textEditingValue.text.toLowerCase());
-                                  });
-                                },
-                                displayStringForOption: (option) =>
-                                    option['namaBank'] as String,
-                                onSelected: (selection) =>
-                                    ctrl.setNamaBankDanPic(
-                                        selection['namaBank'] as String),
-                                fieldViewBuilder: (context,
-                                    textEditingController,
-                                    focusNode,
-                                    onFieldSubmitted) {
-                                  if (ctrl.namaBankCtrl.text.isNotEmpty &&
-                                      textEditingController.text.isEmpty) {
-                                    textEditingController.text =
-                                        ctrl.namaBankCtrl.text;
-                                  }
-                                  return _buildGlassField(
-                                    controller: textEditingController,
-                                    hint: 'Ketik nama KCU/KCP Bank...',
-                                    focusNode: focusNode,
-                                    onChanged: (val) {
-                                      ctrl.namaBankCtrl.text = val;
-                                    },
-                                  );
-                                },
-                                // UI Custom agar Dropdown Autocomplete berwarna gelap
-                                optionsViewBuilder:
-                                    (context, onSelected, options) {
-                                  return Align(
-                                    alignment: Alignment.topLeft,
-                                    child: Material(
-                                      color: const Color(0xFF1E293B),
-                                      elevation: 4.0,
-                                      borderRadius: BorderRadius.circular(15),
-                                      child: SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width -
-                                                80,
-                                        child: ListView.builder(
-                                          padding: const EdgeInsets.all(8.0),
-                                          shrinkWrap: true,
-                                          itemCount: options.length,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            final option =
-                                                options.elementAt(index);
-                                            return ListTile(
-                                              title: Text(option['namaBank'],
-                                                  style: const TextStyle(
-                                                      color: Colors.white)),
-                                              subtitle: Text(
-                                                  'PIC: ${option['namaPic']}',
-                                                  style: TextStyle(
-                                                      color: Colors.white
-                                                          .withOpacity(0.5),
-                                                      fontSize: 12)),
-                                              onTap: () => onSelected(option),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('PIC Bank'),
-                              _buildGlassField(
-                                controller: ctrl.picBankCtrl,
-                                hint: 'Nama PIC Bank terkait',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // =========================================================
-                          // BAGIAN 2: DETAIL ORDER
-                          // =========================================================
-                          _buildGlassSection(
-                            title: 'DETAIL ORDER',
-                            icon: Icons.assignment_outlined,
-                            children: [
-                              _buildLabel('No. Surat Order'),
-                              _buildGlassField(
-                                controller: ctrl.noSuratOrderCtrl,
-                                hint: 'R06.UM.GKD/0004/2026',
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Tanggal Order'),
-                              InkWell(
-                                onTap: () => _pilihTanggal(
-                                    context,
-                                    ctrl.tanggalOrder,
-                                    (dt) async =>
-                                        await ctrl.setTanggalOrder(dt)),
-                                child: InputDecorator(
-                                  decoration: _glassInputDecoration(
-                                      'Pilih tanggal order',
-                                      suffixIcon: Icons.calendar_month),
-                                  child: Text(
-                                    ctrl.tanggalOrder != null
-                                        ? DateFormat('dd MMM yyyy')
-                                            .format(ctrl.tanggalOrder!)
-                                        : 'Pilih tanggal order',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: ctrl.tanggalOrder != null
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Jenis'),
-                              DropdownButtonFormField<String>(
-                                initialValue: ['Hak Tanggungan', 'Lainnya', 'Fidusia']
-                                        .contains(ctrl.jenisCtrl.text)
-                                    ? ctrl.jenisCtrl.text
-                                    : null,
-                                hint: Text('Pilih jenis order',
-                                    style: TextStyle(
-                                        color: Colors.white.withOpacity(0.4),
-                                        fontSize: 14)),
-                                isExpanded: true,
-                                decoration: _glassInputDecoration(''),
-                                dropdownColor: const Color(0xFF1E293B),
-                                iconEnabledColor: Colors.white54,
-                                items: ['Hak Tanggungan', 'Lainnya', 'Fidusia']
-                                    .map((String val) {
-                                  return DropdownMenuItem(
-                                    value: val,
-                                    child: Text(val,
-                                        style: const TextStyle(
-                                            fontSize: 14, color: Colors.white)),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) ctrl.jenisCtrl.text = val;
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Rincian Order'),
-                              _buildGlassField(
-                                controller: ctrl.rincianOrderCtrl,
-                                hint: 'SHM No. 00037/Desa Mekarbakti...',
-                                maxLines: 2,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('No. Covernote'),
-                              _buildGlassField(
-                                controller: ctrl.noCovernoteCtrl,
-                                hint: 'XX/NTR/X/20XX',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // =========================================================
-                          // BAGIAN 3: FINANSIAL
-                          // =========================================================
-                          _buildGlassSection(
-                            title: 'FINANSIAL',
-                            icon: Icons.monetization_on_outlined,
-                            children: [
-                              _buildLabel('Limit / Plafon'),
-                              _buildGlassField(
-                                controller: ctrl.limitPlafonCtrl,
-                                hint: '0',
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [CurrencyFormatIdr()],
-                                prefixText: 'Rp ',
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Nilai HT'),
-                              _buildGlassField(
-                                controller: ctrl.nilaiHTCtrl,
-                                hint: '0',
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [CurrencyFormatIdr()],
-                                prefixText: 'Rp ',
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Biaya Notaris'),
-                              _buildGlassField(
-                                controller: ctrl.biayaNotarisCtrl,
-                                hint: '0',
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [CurrencyFormatIdr()],
-                                prefixText: 'Rp ',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // =========================================================
-                          // BAGIAN 4: PELAKSANAAN & SLA
-                          // =========================================================
-                          _buildGlassSection(
-                            title: 'PELAKSANAAN & SLA',
-                            icon: Icons.timer_outlined,
-                            children: [
-                              _buildLabel('Tanggal Pelaksanaan'),
-                              InputDecorator(
-                                decoration: _glassInputDecoration(
-                                    'Otomatis mengikuti Tanggal Order',
-                                    suffixIcon: Icons.lock_outline),
-                                child: Text(
-                                  ctrl.tanggalPelaksanaan != null
-                                      ? DateFormat('dd MMM yyyy')
-                                          .format(ctrl.tanggalPelaksanaan!)
-                                      : 'Otomatis mengikuti Tanggal Order',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: ctrl.tanggalPelaksanaan != null
-                                        ? Colors.white
-                                        : Colors.white.withOpacity(0.4),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Batas SLA Laporan'),
-                              IgnorePointer(
-                                child: _buildGlassField(
-                                  controller: ctrl.batasSlaCtrl,
-                                  hint:
-                                      'Dihitung otomatis (Tgl Pelaksanaan + SLA)',
-                                  suffixIcon: Icons.lock_outline,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Umur Pekerjaan'),
-                              IgnorePointer(
-                                child: _buildGlassField(
-                                  controller: ctrl.umurPekerjaanCtrl,
-                                  hint:
-                                      'Dihitung otomatis (Hari Ini - Tgl Order)',
-                                  suffixIcon: Icons.lock_outline,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // =========================================================
-                          // BAGIAN 5: PROGRES & BAST
-                          // =========================================================
-                          _buildGlassSection(
-                            title: 'PROGRES & BAST',
-                            icon: Icons.trending_up_rounded,
-                            children: [
-                              _buildLabel('Progres Pekerjaan (Status)'),
-                              DropdownButtonFormField<String>(
-                                initialValue: AppConstants.listStatusPekerjaan
-                                        .contains(ctrl.statusPekerjaan)
-                                    ? ctrl.statusPekerjaan
-                                    : null,
-                                hint: Text('Pilih Status',
-                                    style: TextStyle(
-                                        color: Colors.white.withOpacity(0.4),
-                                        fontSize: 14)),
-                                isExpanded: true,
-                                decoration: _glassInputDecoration(''),
-                                dropdownColor: const Color(0xFF1E293B),
-                                iconEnabledColor: Colors.white54,
-                                items: AppConstants.listStatusPekerjaan
-                                    .map((String val) {
-                                  return DropdownMenuItem(
-                                    value: val,
-                                    child: Text(val,
-                                        style: const TextStyle(
-                                            fontSize: 14, color: Colors.white)),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) ctrl.setStatusPekerjaan(val);
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Progres Terakhir / Keterangan'),
-                              _buildGlassField(
-                                controller: ctrl.progresDetailCtrl,
-                                hint: 'Contoh: SKMHT, Selesai Cetak, dll',
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Tanggal BAST'),
-                              InkWell(
-                                onTap: () => _pilihTanggal(context,
-                                    ctrl.tanggalBast, ctrl.setTanggalBast),
-                                child: InputDecorator(
-                                  decoration: _glassInputDecoration(
-                                      'Pilih tanggal BAST',
-                                      suffixIcon: Icons.calendar_month),
-                                  child: Text(
-                                    ctrl.tanggalBast != null
-                                        ? DateFormat('dd MMM yyyy')
-                                            .format(ctrl.tanggalBast!)
-                                        : 'Pilih tanggal BAST',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: ctrl.tanggalBast != null
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // =========================================================
-                          // BAGIAN 6: CATATAN TAMBAHAN
-                          // =========================================================
-                          _buildGlassSection(
-                            title: 'CATATAN TAMBAHAN',
-                            icon: Icons.note_alt_outlined,
-                            children: [
-                              _buildLabel('Kekurangan Berkas'),
-                              _buildGlassField(
-                                controller: ctrl.kekuranganCtrl,
-                                hint: 'Contoh: CLEAR, Kurang KTP, dll',
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('Per Kasus (Notes)'),
-                              _buildGlassField(
-                                controller: ctrl.notesCtrl,
-                                hint: 'Catatan tambahan terkait kasus debitur',
-                                maxLines: 2,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildLabel('PIC Internal (Akad)'),
-                              _buildGlassField(
-                                controller: ctrl.picInternalCtrl,
-                                hint: 'Nama staf yang memegang berkas',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 40),
-
-                          // =========================================================
-                          // TOMBOL SIMPAN
-                          // =========================================================
-                          SizedBox(
-                            width: double.infinity,
-                            height: 60,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppConstants.goldColor,
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                elevation: 0,
-                              ),
-                              onPressed: () => _simpan(context),
-                              icon: const Icon(Icons.save_outlined,
-                                  color: Colors.black),
-                              label: const Text(
-                                'SIMPAN DATA',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                        ],
-                      ),
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================================================
-  // WIDGET HELPERS - GLASSMORPHISM
-  // ==========================================================================
-
-  Widget _buildGlassSection(
-      {required String title,
-      required IconData icon,
-      required List<Widget> children}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: AppConstants.goldColor, size: 20),
-            const SizedBox(width: 10),
-            Text(title,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1)),
-          ],
-        ),
-        const SizedBox(height: 15),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-              ),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: children),
+    return SiraResponsiveShell(
+      title: ctrl.isEditMode ? 'Edit Laporan' : 'Tambah Laporan',
+      activeMenu: SiraMenu.laporan,
+      maxContentWidth: 720,
+      actions: [
+        TextButton(
+          onPressed: ctrl.isLoading ? null : _simpan,
+          child: Text(
+            'Simpan',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
       ],
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SectionLabel(
+                title: 'Informasi Umum',
+                caption:
+                    'Data identitas utama untuk berkas yang sedang dikelola.',
+              ),
+              SiraSolidCard(
+                child: Column(
+                  children: [
+                    _LabeledField(
+                      label: 'Nama Debitur (Wajib)',
+                      child: TextFormField(
+                        controller: ctrl.namaDebiturCtrl,
+                        validator: (val) => val == null || val.trim().isEmpty
+                            ? 'Nama debitur wajib diisi.'
+                            : null,
+                        decoration: const InputDecoration(
+                          hintText: 'Masukkan nama debitur',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Nama Notaris',
+                      child: Autocomplete<String>(
+                        optionsBuilder: (value) {
+                          if (value.text.isEmpty) {
+                            return const Iterable<String>.empty();
+                          }
+                          return _listNotaris.where(
+                            (option) => option.toLowerCase().contains(
+                              value.text.toLowerCase(),
+                            ),
+                          );
+                        },
+                        onSelected: ctrl.setNamaNotaris,
+                        fieldViewBuilder:
+                            (
+                              context,
+                              textEditingController,
+                              focusNode,
+                              onFieldSubmitted,
+                            ) {
+                              if (ctrl.namaNotarisCtrl.text.isNotEmpty &&
+                                  textEditingController.text.isEmpty) {
+                                textEditingController.text =
+                                    ctrl.namaNotarisCtrl.text;
+                              }
+                              return TextFormField(
+                                controller: textEditingController,
+                                focusNode: focusNode,
+                                decoration: const InputDecoration(
+                                  hintText: 'Pilih atau ketik nama notaris',
+                                ),
+                                onChanged: (val) =>
+                                    ctrl.namaNotarisCtrl.text = val,
+                              );
+                            },
+                        optionsViewBuilder: (context, onSelected, options) {
+                          return Align(
+                            alignment: Alignment.topLeft,
+                            child: Material(
+                              color: AppColors.surfaceL1,
+                              borderRadius: BorderRadius.circular(16),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: isDesktop ? 520 : 320,
+                                  maxHeight: 220,
+                                ),
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(AppSpacing.sm),
+                                  shrinkWrap: true,
+                                  itemCount: options.length,
+                                  itemBuilder: (context, index) {
+                                    final option = options.elementAt(index);
+                                    return ListTile(
+                                      title: Text(option),
+                                      onTap: () => onSelected(option),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'KCU/KCP (Bank)',
+                      child: Autocomplete<Map<String, dynamic>>(
+                        optionsBuilder: (value) {
+                          if (value.text.isEmpty) {
+                            return const Iterable<Map<String, dynamic>>.empty();
+                          }
+                          return ctrl.listMasterBank.where((option) {
+                            final namaBank = option['namaBank']
+                                .toString()
+                                .toLowerCase();
+                            return namaBank.contains(value.text.toLowerCase());
+                          });
+                        },
+                        displayStringForOption: (option) =>
+                            option['namaBank'] as String,
+                        onSelected: (selection) => ctrl.setNamaBankDanPic(
+                          selection['namaBank'] as String,
+                        ),
+                        fieldViewBuilder:
+                            (
+                              context,
+                              textEditingController,
+                              focusNode,
+                              onFieldSubmitted,
+                            ) {
+                              if (ctrl.namaBankCtrl.text.isNotEmpty &&
+                                  textEditingController.text.isEmpty) {
+                                textEditingController.text =
+                                    ctrl.namaBankCtrl.text;
+                              }
+                              return TextFormField(
+                                controller: textEditingController,
+                                focusNode: focusNode,
+                                decoration: const InputDecoration(
+                                  hintText: 'Ketik nama KCU/KCP Bank...',
+                                ),
+                                onChanged: (val) =>
+                                    ctrl.namaBankCtrl.text = val,
+                              );
+                            },
+                        optionsViewBuilder: (context, onSelected, options) {
+                          return Align(
+                            alignment: Alignment.topLeft,
+                            child: Material(
+                              color: AppColors.surfaceL1,
+                              borderRadius: BorderRadius.circular(16),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: isDesktop ? 520 : 320,
+                                  maxHeight: 240,
+                                ),
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(AppSpacing.sm),
+                                  shrinkWrap: true,
+                                  itemCount: options.length,
+                                  itemBuilder: (context, index) {
+                                    final option = options.elementAt(index);
+                                    return ListTile(
+                                      title: Text(option['namaBank']),
+                                      subtitle: Text(
+                                        'PIC: ${option['namaPic']}',
+                                      ),
+                                      onTap: () => onSelected(option),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'PIC Bank',
+                      child: TextFormField(
+                        controller: ctrl.picBankCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'Nama PIC Bank terkait',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _SectionLabel(
+                title: 'Detail Order',
+                caption:
+                    'Informasi order, jenis pekerjaan, dan referensi covernote.',
+              ),
+              SiraSolidCard(
+                child: Column(
+                  children: [
+                    _LabeledField(
+                      label: 'No. Surat Order',
+                      child: TextFormField(
+                        controller: ctrl.noSuratOrderCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'R06.UM.GKD/0004/2026',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Tanggal Order',
+                      child: _DateField(
+                        text: ctrl.tanggalOrder != null
+                            ? DateFormat(
+                                'dd MMM yyyy',
+                              ).format(ctrl.tanggalOrder!)
+                            : 'Pilih tanggal order',
+                        isFilled: ctrl.tanggalOrder != null,
+                        onTap: () => _pilihTanggal(
+                          context,
+                          ctrl.tanggalOrder,
+                          (dt) async => ctrl.setTanggalOrder(dt),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Jenis',
+                      child: DropdownButtonFormField<String>(
+                        initialValue:
+                            [
+                              'Hak Tanggungan',
+                              'Lainnya',
+                              'Fidusia',
+                            ].contains(ctrl.jenisCtrl.text)
+                            ? ctrl.jenisCtrl.text
+                            : null,
+                        items: const ['Hak Tanggungan', 'Lainnya', 'Fidusia']
+                            .map(
+                              (val) => DropdownMenuItem<String>(
+                                value: val,
+                                child: Text(val),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) ctrl.jenisCtrl.text = val;
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Pilih jenis order',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Rincian Order',
+                      child: TextFormField(
+                        controller: ctrl.rincianOrderCtrl,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          hintText: 'SHM No. 00037/Desa Mekarbakti...',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'No. Covernote',
+                      child: TextFormField(
+                        controller: ctrl.noCovernoteCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'XX/NTR/X/20XX',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _SectionLabel(
+                title: 'Finansial',
+                caption:
+                    'Pastikan nominal terisi konsisten untuk kebutuhan monitoring.',
+              ),
+              SiraSolidCard(
+                child: Column(
+                  children: [
+                    _CurrencyField(
+                      label: 'Limit / Plafon',
+                      controller: ctrl.limitPlafonCtrl,
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _CurrencyField(
+                      label: 'Nilai HT',
+                      controller: ctrl.nilaiHTCtrl,
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _CurrencyField(
+                      label: 'Biaya Notaris',
+                      controller: ctrl.biayaNotarisCtrl,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _SectionLabel(
+                title: 'Pelaksanaan & SLA',
+                caption:
+                    'Nilai otomatis tetap dipertahankan dari logic controller saat ini.',
+              ),
+              SiraSolidCard(
+                child: Column(
+                  children: [
+                    _LabeledField(
+                      label: 'Tanggal Pelaksanaan',
+                      child: _ReadOnlyField(
+                        text: ctrl.tanggalPelaksanaan != null
+                            ? DateFormat(
+                                'dd MMM yyyy',
+                              ).format(ctrl.tanggalPelaksanaan!)
+                            : 'Otomatis mengikuti tanggal order',
+                        icon: Icons.lock_outline_rounded,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Batas SLA Laporan',
+                      child: _ReadOnlyField(
+                        text: ctrl.batasSlaCtrl.text.isEmpty
+                            ? 'Dihitung otomatis'
+                            : ctrl.batasSlaCtrl.text,
+                        icon: Icons.lock_outline_rounded,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Umur Pekerjaan',
+                      child: _ReadOnlyField(
+                        text: ctrl.umurPekerjaanCtrl.text.isEmpty
+                            ? 'Dihitung otomatis'
+                            : ctrl.umurPekerjaanCtrl.text,
+                        icon: Icons.lock_outline_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _SectionLabel(
+                title: 'Progres & BAST',
+                caption:
+                    'Status dan perkembangan akhir untuk memudahkan tindak lanjut.',
+              ),
+              SiraSolidCard(
+                child: Column(
+                  children: [
+                    _LabeledField(
+                      label: 'Progres Pekerjaan (Status)',
+                      child: DropdownButtonFormField<String>(
+                        initialValue:
+                            AppConstants.listStatusPekerjaan.contains(
+                              ctrl.statusPekerjaan,
+                            )
+                            ? ctrl.statusPekerjaan
+                            : null,
+                        items: AppConstants.listStatusPekerjaan
+                            .map(
+                              (val) => DropdownMenuItem<String>(
+                                value: val,
+                                child: Text(val),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) ctrl.setStatusPekerjaan(val);
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Pilih status pekerjaan',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Progres Terakhir / Keterangan',
+                      child: TextFormField(
+                        controller: ctrl.progresDetailCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'Contoh: SKMHT, selesai cetak, dll',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Tanggal BAST',
+                      child: _DateField(
+                        text: ctrl.tanggalBast != null
+                            ? DateFormat(
+                                'dd MMM yyyy',
+                              ).format(ctrl.tanggalBast!)
+                            : 'Pilih tanggal BAST',
+                        isFilled: ctrl.tanggalBast != null,
+                        onTap: () => _pilihTanggal(
+                          context,
+                          ctrl.tanggalBast,
+                          ctrl.setTanggalBast,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _SectionLabel(
+                title: 'Catatan Tambahan',
+                caption:
+                    'Tambahkan konteks yang membantu tim saat menindaklanjuti berkas.',
+              ),
+              SiraSolidCard(
+                child: Column(
+                  children: [
+                    _LabeledField(
+                      label: 'Kekurangan Berkas',
+                      child: TextFormField(
+                        controller: ctrl.kekuranganCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'Contoh: CLEAR, kurang KTP, dll',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'Per Kasus (Notes)',
+                      child: TextFormField(
+                        controller: ctrl.notesCtrl,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          hintText: 'Catatan tambahan terkait kasus debitur',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                    _LabeledField(
+                      label: 'PIC Internal (Akad)',
+                      child: TextFormField(
+                        controller: ctrl.picInternalCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'Nama staf yang memegang berkas',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_saveError.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.base),
+                Text(
+                  _saveError,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.xl),
+              SiraPrimaryButton(
+                label: ctrl.isEditMode ? 'Simpan perubahan' : 'Simpan data',
+                icon: Icons.save_outlined,
+                onPressed: _simpan,
+                isLoading: ctrl.isLoading,
+                expanded: true,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+          ),
+        ),
+      ),
     );
   }
+}
 
-  Widget _buildLabel(String text) {
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.title, required this.caption});
+
+  final String title;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      padding: const EdgeInsets.only(bottom: AppSpacing.base),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(caption, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        child,
+      ],
+    );
+  }
+}
+
+class _CurrencyField extends StatelessWidget {
+  const _CurrencyField({required this.label, required this.controller});
+
+  final String label;
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _LabeledField(
+      label: label,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        inputFormatters: [CurrencyFormatIdr()],
+        decoration: const InputDecoration(hintText: '0', prefixText: 'Rp '),
+      ),
+    );
+  }
+}
+
+class _DateField extends StatelessWidget {
+  const _DateField({
+    required this.text,
+    required this.isFilled,
+    required this.onTap,
+  });
+
+  final String text;
+  final bool isFilled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          suffixIcon: Icon(Icons.calendar_month_outlined),
+        ),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: isFilled ? AppColors.textPrimary : AppColors.textTertiary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadOnlyField extends StatelessWidget {
+  const _ReadOnlyField({required this.text, required this.icon});
+
+  final String text;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return InputDecorator(
+      decoration: InputDecoration(suffixIcon: Icon(icon)),
       child: Text(
         text,
-        style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.white.withOpacity(0.7),
-            letterSpacing: 0.5),
-      ),
-    );
-  }
-
-  Widget _buildGlassField({
-    required TextEditingController controller,
-    required String hint,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-    IconData? suffixIcon,
-    String? prefixText,
-    FocusNode? focusNode,
-    Function(String)? onChanged,
-  }) {
-    return TextFormField(
-      controller: controller,
-      focusNode: focusNode,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      validator: validator,
-      onChanged: onChanged,
-      // Fitur yang Anda minta: Mematikan auto huruf besar agar leluasa mengetik manual
-      textCapitalization: TextCapitalization.none,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
-      decoration: _glassInputDecoration(hint,
-          suffixIcon: suffixIcon, prefixText: prefixText),
-    );
-  }
-
-  InputDecoration _glassInputDecoration(String hint,
-      {IconData? suffixIcon, String? prefixText}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 14),
-      prefixText: prefixText,
-      prefixStyle: const TextStyle(color: Colors.white, fontSize: 14),
-      suffixIcon: suffixIcon != null
-          ? Icon(suffixIcon, color: Colors.white.withOpacity(0.4), size: 20)
-          : null,
-      filled: true,
-      fillColor: Colors.black.withOpacity(0.2),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: AppConstants.goldColor),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Colors.redAccent),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Colors.redAccent),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color:
+              text == 'Dihitung otomatis' ||
+                  text == 'Otomatis mengikuti tanggal order'
+              ? AppColors.textTertiary
+              : AppColors.textPrimary,
+        ),
       ),
     );
   }

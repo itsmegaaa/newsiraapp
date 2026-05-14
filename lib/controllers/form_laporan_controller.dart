@@ -57,9 +57,11 @@ class FormLaporanController extends ChangeNotifier {
   // INISIALISASI FORM
   // ==========================================================================
 
-// FIX MEDIUM: Ubah menjadi Future<void> dan async
-  Future<void> initForm(
-      {LaporanModel? laporanExisting, required String tahunAktif}) async {
+  // FIX MEDIUM: Ubah menjadi Future<void> dan async
+  Future<void> initForm({
+    LaporanModel? laporanExisting,
+    required String tahunAktif,
+  }) async {
     // 1. Nyalakan loading spinner di layar form
     _setLoading(true);
 
@@ -94,8 +96,9 @@ class FormLaporanController extends ChangeNotifier {
       picInternalCtrl.text = laporanExisting.picInternal;
 
       _tanggalOrder = _parseDateOrNull(laporanExisting.tanggalOrder);
-      _tanggalPelaksanaan =
-          _parseDateOrNull(laporanExisting.tanggalPelaksanaan);
+      _tanggalPelaksanaan = _parseDateOrNull(
+        laporanExisting.tanggalPelaksanaan,
+      );
       _tanggalBast = _parseDateOrNull(laporanExisting.tanggalBast);
     } else {
       _bersihkanForm();
@@ -130,8 +133,11 @@ class FormLaporanController extends ChangeNotifier {
 
   String _formatInputRupiah(String angkaStr) {
     if (angkaStr.isEmpty || angkaStr == '0') return '';
-    final formatter =
-        NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0);
+    final formatter = NumberFormat.currency(
+      locale: 'id',
+      symbol: '',
+      decimalDigits: 0,
+    );
     return formatter.format(int.parse(angkaStr)).trim();
   }
 
@@ -155,7 +161,8 @@ class FormLaporanController extends ChangeNotifier {
   void setTanggalBast(DateTime date) {
     _tanggalBast = date;
     setStatusPekerjaan(
-        'SELESAI'); // Gunakan huruf kapital agar cocok dengan list
+      'SELESAI',
+    ); // Gunakan huruf kapital agar cocok dengan list
     notifyListeners();
   }
 
@@ -178,11 +185,15 @@ class FormLaporanController extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      final cleanPlafon =
-          limitPlafonCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+      final cleanPlafon = limitPlafonCtrl.text.replaceAll(
+        RegExp(r'[^0-9]'),
+        '',
+      );
       final cleanHT = nilaiHTCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
-      final cleanBiaya =
-          biayaNotarisCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+      final cleanBiaya = biayaNotarisCtrl.text.replaceAll(
+        RegExp(r'[^0-9]'),
+        '',
+      );
 
       String formatTanggal(DateTime? date) {
         return date != null ? DateFormat('yyyy-MM-dd').format(date) : '';
@@ -245,7 +256,8 @@ class FormLaporanController extends ChangeNotifier {
   String _hitungDiff(LaporanModel oldData, LaporanModel newData) {
     List<String> changes = [];
 
-    if (oldData.namaDebitur.toUpperCase() != newData.namaDebitur.toUpperCase()) {
+    if (oldData.namaDebitur.toUpperCase() !=
+        newData.namaDebitur.toUpperCase()) {
       changes.add('Debitur');
     }
     if (oldData.namaNotaris != newData.namaNotaris) changes.add('Notaris');
@@ -261,7 +273,8 @@ class FormLaporanController extends ChangeNotifier {
     if (oldData.rincianOrder != newData.rincianOrder) {
       changes.add('Rincian Order');
     }
-    if (oldData.noCovernote.toUpperCase() != newData.noCovernote.toUpperCase()) {
+    if (oldData.noCovernote.toUpperCase() !=
+        newData.noCovernote.toUpperCase()) {
       changes.add('No Covernote');
     }
     if (oldData.limitPlafon != newData.limitPlafon) changes.add('Limit');
@@ -387,7 +400,10 @@ class FormLaporanController extends ChangeNotifier {
     if (_tanggalOrder != null) {
       final now = DateTime.now();
       final tglOrderSaja = DateTime(
-          _tanggalOrder!.year, _tanggalOrder!.month, _tanggalOrder!.day);
+        _tanggalOrder!.year,
+        _tanggalOrder!.month,
+        _tanggalOrder!.day,
+      );
       final hariIniSaja = DateTime(now.year, now.month, now.day);
       int selisihHari = hariIniSaja.difference(tglOrderSaja).inDays;
       if (selisihHari < 0) selisihHari = 0;

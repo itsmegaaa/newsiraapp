@@ -24,12 +24,7 @@ class AppConstants {
     'SELESAI',
   ];
 
-  static const List<String> listTahunAktif = [
-    '2023',
-    '2024',
-    '2025',
-    '2026',
-  ];
+  static const List<String> listTahunAktif = ['2023', '2024', '2025', '2026'];
 
   // ============================================================================
   // STYLE CONSTANTS

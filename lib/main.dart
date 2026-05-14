@@ -12,6 +12,7 @@ import 'controllers/laporan_controller.dart';
 import 'ui/screens/auth/login_screen.dart';
 import 'ui/screens/portal/home_screen.dart';
 import 'controllers/theme_controller.dart';
+import 'core/theme/app_theme.dart';
 
 // ============================================================================
 // MAIN FUNCTION
@@ -19,9 +20,7 @@ import 'controllers/theme_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
@@ -44,7 +43,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (context) =>
               FormLaporanController(repo: context.read<LaporanRepository>()),
-        )
+        ),
       ],
       child: const MyApp(),
     ),
@@ -59,59 +58,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeCtrl = context.watch<ThemeController>();
-
     return MaterialApp(
       title: 'SIRA',
       debugShowCheckedModeBanner: false,
-      themeMode: themeCtrl.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-
-      // Tema Terang (Sesuai Panduan UI)
-      theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC), // bgColor
-        primaryColor: const Color(0xFF0F172A), // navyColor
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF0F172A),
-          secondary: Color(0xFFD4AF37), // goldColor
-          surface: Colors.white,
-        ),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          iconTheme: IconThemeData(color: Color(0xFF0F172A)),
-          titleTextStyle: TextStyle(
-            color: Color(0xFF0F172A),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        useMaterial3: true,
-      ),
-
-      // Tema Gelap (Sesuai Panduan UI)
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212), // darkBg
-        primaryColor: const Color(0xFF0F172A),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF0F172A),
-          secondary: Color(0xFFD4AF37),
-          surface: Color(0xFF1E1E1E), // darkSurface
-        ),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          backgroundColor: Color(0xFF1E1E1E),
-          iconTheme: IconThemeData(color: Colors.white),
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        useMaterial3: true,
-      ),
-
+      themeMode: ThemeMode.light,
+      theme: siraLightTheme,
       home: const AuthGate(),
     );
   }
@@ -130,11 +81,7 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFD4AF37), // goldColor
-              ),
-            ),
+            body: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
           );
         }
 

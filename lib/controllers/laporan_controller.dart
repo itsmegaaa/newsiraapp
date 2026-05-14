@@ -64,22 +64,24 @@ class LaporanController extends ChangeNotifier {
     notifyListeners();
 
     _streamSub?.cancel();
-    _streamSub = _repo.streamLaporanByTahun(_tahunAktif).listen(
-      (snapshotData) {
-        if (_isDisposed) return;
-        _semuaLaporan = snapshotData;
-        _terapkanFilterDanPencarian();
-        _isLoading = false;
-        notifyListeners();
-      },
-      onError: (error) {
-        debugPrint('Error mendengarkan stream laporan: $error');
-        if (!_isDisposed) {
-          _isLoading = false;
-          notifyListeners();
-        }
-      },
-    );
+    _streamSub = _repo
+        .streamLaporanByTahun(_tahunAktif)
+        .listen(
+          (snapshotData) {
+            if (_isDisposed) return;
+            _semuaLaporan = snapshotData;
+            _terapkanFilterDanPencarian();
+            _isLoading = false;
+            notifyListeners();
+          },
+          onError: (error) {
+            debugPrint('Error mendengarkan stream laporan: $error');
+            if (!_isDisposed) {
+              _isLoading = false;
+              notifyListeners();
+            }
+          },
+        );
   }
 
   void ubahTahun(String tahunBaru) {
@@ -120,11 +122,17 @@ class LaporanController extends ChangeNotifier {
   }
 
   Future<void> hapusData(
-      String id, String namaDebitur, String userEmail) async {
+    String id,
+    String namaDebitur,
+    String userEmail,
+  ) async {
     try {
       await _repo.hapusLaporan(id, _tahunAktif);
       await _repo.catatAktivitas(
-          'HAPUS', 'Menghapus berkas debitur $namaDebitur', userEmail);
+        'HAPUS',
+        'Menghapus berkas debitur $namaDebitur',
+        userEmail,
+      );
     } catch (e) {
       debugPrint('Gagal menghapus data: $e');
       rethrow;
@@ -134,9 +142,10 @@ class LaporanController extends ChangeNotifier {
   Future<void> triggerSyncManual(String userEmail) async {
     try {
       await _repo.catatAktivitas(
-          'SYNC',
-          'Meminta sinkronisasi manual ke Spreadsheet untuk data $_tahunAktif',
-          userEmail);
+        'SYNC',
+        'Meminta sinkronisasi manual ke Spreadsheet untuk data $_tahunAktif',
+        userEmail,
+      );
       await _repo.triggerSyncKeSheet();
     } catch (e) {
       debugPrint('Gagal sync manual: $e');

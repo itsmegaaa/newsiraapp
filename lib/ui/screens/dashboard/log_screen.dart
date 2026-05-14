@@ -1,12 +1,13 @@
-// ignore_for_file: deprecated_member_use
-
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../data/repositories/laporan_repository.dart';
+import '../../layout/sira_responsive_shell.dart';
+import '../../widgets/sira_solid_card.dart';
 
 class LogScreen extends StatelessWidget {
   const LogScreen({super.key});
@@ -14,197 +15,198 @@ class LogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = context.read<LaporanRepository>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('RIWAYAT AKTIVITAS'),
-        centerTitle: true,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
+    return SiraResponsiveShell(
+      title: 'Riwayat Aktivitas',
+      activeMenu: SiraMenu.log,
+      child: StreamBuilder<QuerySnapshot>(
         stream: repo.streamLogs(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: AppConstants.goldColor),
+              child: CircularProgressIndicator(strokeWidth: 2.4),
             );
           }
 
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Terjadi kesalahan saat memuat log',
-                style: TextStyle(color: Colors.red.shade400),
+                'Terjadi kesalahan saat memuat log.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
               ),
             );
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.history_toggle_off,
-                      size: 80, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Belum ada riwayat aktivitas.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            );
+          final logs = snapshot.data?.docs ?? [];
+          if (logs.isEmpty) {
+            return const _EmptyLogState();
           }
 
-          final logs = snapshot.data!.docs;
-
-          return ListView.builder(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20),
+          return ListView.separated(
             itemCount: logs.length,
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
-              final doc = logs[index];
-              final data = doc.data() as Map<String, dynamic>;
-
-              return _buildLogCard(context, data, isDark);
+              final data = logs[index].data() as Map<String, dynamic>;
+              return _LogCard(data: data);
             },
           );
         },
       ),
     );
   }
+}
 
-  Widget _buildLogCard(
-      BuildContext context, Map<String, dynamic> data, bool isDark) {
+class _LogCard extends StatelessWidget {
+  const _LogCard({required this.data});
+
+  final Map<String, dynamic> data;
+
+  @override
+  Widget build(BuildContext context) {
     final aksi = data['aksi'] as String? ?? 'UNKNOWN';
     final detail = data['detail'] as String? ?? '-';
     final oleh = data['oleh'] as String? ?? 'Sistem';
     final waktu = data['waktu'] as Timestamp?;
+    final semantic = _semanticForAction(aksi);
 
-    // Konfigurasi Visual Berdasarkan Aksi
-    Color actionColor;
-    IconData actionIcon;
-
-    switch (aksi.toUpperCase()) {
-      case 'TAMBAH':
-        actionColor = Colors.green;
-        actionIcon = Icons.add_circle_outline;
-        break;
-      case 'EDIT':
-        actionColor = Colors.blue;
-        actionIcon = Icons.edit_note;
-        break;
-      case 'HAPUS':
-        actionColor = Colors.red;
-        actionIcon = Icons.delete_forever;
-        break;
-      case 'SYNC':
-        actionColor = Colors.teal;
-        actionIcon = Icons.sync;
-        break;
-      default:
-        actionColor = Colors.grey;
-        actionIcon = Icons.info_outline;
-    }
-
-    String waktuStr = '';
-    if (waktu != null) {
-      final date = waktu.toDate();
-      waktuStr = DateFormat('dd MMM yyyy • HH:mm').format(date);
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppConstants.darkSurface : AppConstants.surfaceColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [AppConstants.primaryShadow],
-        border: Border(
-          left: BorderSide(color: actionColor, width: 4),
-        ),
-      ),
-      child: Column(
+    return SiraSolidCard(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Ikon Aksi
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: actionColor.withOpacity(isDark ? 0.2 : 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(actionIcon, color: actionColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-
-              // Detail Aksi
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: semantic.softColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(semantic.icon, color: semantic.color),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          aksi.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: actionColor,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        Text(
-                          waktuStr,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade500,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     Text(
-                      detail,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        height: 1.4,
+                      aksi,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: semantic.color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      waktu == null
+                          ? '-'
+                          : DateFormat(
+                              'dd MMM yyyy, HH:mm',
+                            ).format(waktu.toDate()),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(detail, style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: AppSpacing.base),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline_rounded,
+                      size: 14,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      oleh,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-
-          const Padding(
-            padding: EdgeInsets.only(top: 12, bottom: 8, left: 48),
-            child: Divider(height: 1),
-          ),
-
-          // User Info
-          Padding(
-            padding: const EdgeInsets.only(left: 48),
-            child: Row(
-              children: [
-                Icon(Icons.person_outline,
-                    size: 14, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Text(
-                  oleh,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _ActionSemantic _semanticForAction(String aksi) {
+    switch (aksi.toUpperCase()) {
+      case 'TAMBAH':
+        return const _ActionSemantic(
+          AppColors.success,
+          AppColors.successSoft,
+          Icons.add_circle_outline_rounded,
+        );
+      case 'EDIT':
+        return const _ActionSemantic(
+          AppColors.info,
+          AppColors.infoSoft,
+          Icons.edit_outlined,
+        );
+      case 'HAPUS':
+        return const _ActionSemantic(
+          AppColors.error,
+          AppColors.errorSoft,
+          Icons.delete_outline_rounded,
+        );
+      case 'SYNC':
+        return const _ActionSemantic(
+          AppColors.primary,
+          AppColors.primarySoft,
+          Icons.sync_rounded,
+        );
+      default:
+        return const _ActionSemantic(
+          AppColors.warning,
+          AppColors.warningSoft,
+          Icons.info_outline_rounded,
+        );
+    }
+  }
+}
+
+class _ActionSemantic {
+  const _ActionSemantic(this.color, this.softColor, this.icon);
+
+  final Color color;
+  final Color softColor;
+  final IconData icon;
+}
+
+class _EmptyLogState extends StatelessWidget {
+  const _EmptyLogState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.history_toggle_off_rounded,
+            size: 72,
+            color: AppColors.textTertiary.withValues(alpha: 0.7),
+          ),
+          const SizedBox(height: AppSpacing.base),
+          Text(
+            'Belum ada riwayat aktivitas',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Log perubahan laporan akan muncul di sini.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),

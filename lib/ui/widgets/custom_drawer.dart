@@ -31,7 +31,9 @@ class CustomDrawer extends StatelessWidget {
                 color: const Color(0xFF0F172A).withOpacity(0.85),
                 border: Border(
                   right: BorderSide(
-                      color: Colors.white.withOpacity(0.1), width: 1.5),
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -47,23 +49,28 @@ class CustomDrawer extends StatelessWidget {
                       const CircleAvatar(
                         radius: 40,
                         backgroundColor: AppConstants.goldColor,
-                        child:
-                            Icon(Icons.person, size: 50, color: Colors.black),
+                        child: Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Colors.black,
+                        ),
                       ),
                       const SizedBox(height: 15),
                       Text(
                         userProv.nama,
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                       Text(
                         userProv.isAdmin ? 'ADMINISTRATOR' : 'STAFF',
                         style: TextStyle(
-                            color: AppConstants.goldColor.withOpacity(0.7),
-                            fontSize: 10,
-                            letterSpacing: 2),
+                          color: AppConstants.goldColor.withOpacity(0.7),
+                          fontSize: 10,
+                          letterSpacing: 2,
+                        ),
                       ),
                     ],
                   ),
@@ -88,9 +95,11 @@ class CustomDrawer extends StatelessWidget {
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const MasterBankScreen()));
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MasterBankScreen(),
+                            ),
+                          );
                         },
                       ),
 
@@ -148,10 +157,11 @@ class CustomDrawer extends StatelessWidget {
       title: Text(
         title,
         style: TextStyle(
-            color: color.withOpacity(0.9),
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            letterSpacing: 1),
+          color: color.withOpacity(0.9),
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          letterSpacing: 1,
+        ),
       ),
     );
   }
@@ -170,11 +180,13 @@ class CustomDrawer extends StatelessWidget {
         child: AlertDialog(
           backgroundColor: const Color(0xFF1E293B).withOpacity(0.95),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Colors.white10)),
-          title: const Text('Kelola Daftar Notaris',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.white10),
+          ),
+          title: const Text(
+            'Kelola Daftar Notaris',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: Column(
@@ -188,12 +200,13 @@ class CustomDrawer extends StatelessWidget {
                     hintText: 'Tambah nama notaris...',
                     hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.add_circle,
-                          color: AppConstants.goldColor),
+                      icon: const Icon(
+                        Icons.add_circle,
+                        color: AppConstants.goldColor,
+                      ),
                       onPressed: () async {
                         if (notarisBaruCtrl.text.trim().isNotEmpty) {
-                          await repo
-                              .tambahNotaris(notarisBaruCtrl.text.trim());
+                          await repo.tambahNotaris(notarisBaruCtrl.text.trim());
                           notarisBaruCtrl.clear();
                         }
                       },
@@ -210,7 +223,8 @@ class CustomDrawer extends StatelessWidget {
                         return const CircularProgressIndicator();
                       }
 
-                      final data = snapshot.data?.data() as Map<String, dynamic>?;
+                      final data =
+                          snapshot.data?.data() as Map<String, dynamic>?;
                       final list = data != null && data['items'] is List
                           ? List<String>.from(data['items'] as List)
                           : <String>[];
@@ -221,11 +235,16 @@ class CustomDrawer extends StatelessWidget {
                         itemBuilder: (context, index) {
                           return ListTile(
                             dense: true,
-                            title: Text(list[index],
-                                style: const TextStyle(color: Colors.white70)),
+                            title: Text(
+                              list[index],
+                              style: const TextStyle(color: Colors.white70),
+                            ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_sweep,
-                                  color: Colors.redAccent, size: 20),
+                              icon: const Icon(
+                                Icons.delete_sweep,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
                               onPressed: () async {
                                 await repo.hapusNotaris(list[index]);
                               },
@@ -241,9 +260,12 @@ class CustomDrawer extends StatelessWidget {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Tutup',
-                    style: TextStyle(color: Colors.white38))),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Tutup',
+                style: TextStyle(color: Colors.white38),
+              ),
+            ),
           ],
         ),
       ),
@@ -259,27 +281,40 @@ class CustomDrawer extends StatelessWidget {
         child: AlertDialog(
           backgroundColor: const Color(0xFF1E293B).withOpacity(0.95),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Colors.white10)),
-          title:
-              const Text('Sinkronisasi', style: TextStyle(color: Colors.white)),
-          content: const Text('Kirim data terbaru ke Spreadsheet sekarang?',
-              style: TextStyle(color: Colors.white70)),
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.white10),
+          ),
+          title: const Text(
+            'Sinkronisasi',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Kirim data terbaru ke Spreadsheet sekarang?',
+            style: TextStyle(color: Colors.white70),
+          ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Batal',
-                    style: TextStyle(color: Colors.white38))),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: Colors.white38),
+              ),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.goldColor),
+                backgroundColor: AppConstants.goldColor,
+              ),
               onPressed: () {
                 Navigator.pop(ctx);
                 ctrl.triggerSyncManual(email);
               },
-              child: const Text('Ya, Sync',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Ya, Sync',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),

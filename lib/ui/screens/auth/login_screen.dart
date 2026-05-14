@@ -1,9 +1,12 @@
-// ignore_for_file: deprecated_member_use
-
-import 'dart:ui';
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../widgets/sira_glass_card.dart';
+import '../../widgets/sira_page_background.dart';
+import '../../widgets/sira_primary_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
         email: email,
         password: password,
       );
-      // Jika berhasil, AuthGate akan otomatis mendeteksi dan memindah user
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;
@@ -64,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _errorMessage = 'Gagal masuk: ${e.message}';
         }
       });
-    } catch (e) {
+    } catch (_) {
       setState(() {
         _isLoading = false;
         _errorMessage = 'Terjadi kesalahan sistem. Coba lagi nanti.';
@@ -84,131 +86,91 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // BACKGROUND GRADIENT
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0F172A), Color(0xFF020617)],
-              ),
-            ),
-          ),
-
-          // ORNAMEN CAHAYA
+          const Positioned.fill(child: SiraPageBackground()),
           Positioned(
-            bottom: -100,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppConstants.goldColor.withOpacity(0.05),
-              ),
-            ),
+            top: -48,
+            right: -24,
+            child: _TintBlob(size: 220, color: AppColors.primarySoft),
           ),
-
-          // LOGIN FORM GLASS
+          Positioned(
+            bottom: -64,
+            left: -40,
+            child: _TintBlob(size: 260, color: AppColors.surfaceL1),
+          ),
           Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                children: [
-                  // LOGO & TITLE
-                  const Icon(Icons.shield_outlined,
-                      color: AppConstants.goldColor, size: 80),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'SIRA',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 4),
-                  ),
-                  Text(
-                    'Sistem Informasi Riwayat Administrasi',
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.5), fontSize: 12),
-                  ),
-                  const SizedBox(height: 50),
-
-                  // CARD GLASS
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: Container(
-                        padding: const EdgeInsets.all(30),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                              color: Colors.white.withOpacity(0.1), width: 1.5),
-                        ),
-                        child: Column(
-                          children: [
-                            _buildGlassInput(
-                              label: 'Username / Email',
-                              icon: Icons.alternate_email_rounded,
-                              controller: _emailCtrl,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildGlassInput(
-                              label: 'Password',
-                              icon: Icons.lock_outline_rounded,
-                              isPassword: true,
-                              controller: _passwordCtrl,
-                            ),
-
-                            // Pesan Error Merah
-                            if (_errorMessage.isNotEmpty) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                _errorMessage,
-                                style: const TextStyle(
-                                    color: Colors.redAccent, fontSize: 13),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-
-                            const SizedBox(height: 40),
-
-                            SizedBox(
-                              width: double.infinity,
-                              height: 55,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppConstants.goldColor,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15)),
-                                  elevation: 0,
-                                ),
-                                onPressed: _isLoading ? null : _login,
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                            color: Colors.black,
-                                            strokeWidth: 2.5),
-                                      )
-                                    : const Text(
-                                        'MASUK KE SISTEM',
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.5),
-                                      ),
-                              ),
-                            ),
-                          ],
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: SiraGlassCard(
+                  borderRadius: AppRadius.cardXl,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Masuk ke SIRA',
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Sistem Informasi Riwayat Administrasi untuk monitoring berkas dan progres proyek.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.xxl),
+                      TextField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'nama@perusahaan.com',
+                          prefixIcon: Icon(Icons.alternate_email_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.base),
+                      TextField(
+                        controller: _passwordCtrl,
+                        obscureText: !_isPasswordVisible,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          hintText: 'Masukkan password',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_errorMessage.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.base),
+                        Text(
+                          _errorMessage,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColors.error,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.xxl),
+                      SiraPrimaryButton(
+                        label: 'Masuk ke sistem',
+                        onPressed: _login,
+                        isLoading: _isLoading,
+                        expanded: true,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -216,45 +178,22 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
 
-  Widget _buildGlassInput({
-    required String label,
-    required IconData icon,
-    bool isPassword = false,
-    required TextEditingController controller,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword && !_isPasswordVisible,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.5), size: 20),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.white.withOpacity(0.5),
-                  size: 20,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-              )
-            : null,
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.03),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: AppConstants.goldColor),
-        ),
+class _TintBlob extends StatelessWidget {
+  const _TintBlob({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color.withValues(alpha: 0.7),
       ),
     );
   }

@@ -18,12 +18,12 @@ class LaporanRepository {
         .orderBy('waktuUpdate', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => LaporanModel.fromFirestore(doc))
-          // FIX MEDIUM: Hanya ambil data yang valid (bukan null)
-          .whereType<LaporanModel>()
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => LaporanModel.fromFirestore(doc))
+              // FIX MEDIUM: Hanya ambil data yang valid (bukan null)
+              .whereType<LaporanModel>()
+              .toList();
+        });
   }
 
   Stream<DocumentSnapshot> streamSyncStatus() {
@@ -49,8 +49,9 @@ class LaporanRepository {
         ? _db.collection('laporan_${laporan.tahun}').doc()
         : _db.collection('laporan_${laporan.tahun}').doc(laporan.id);
 
-    final finalLaporan =
-        laporan.id.isEmpty ? laporan.copyWith(id: docRef.id) : laporan;
+    final finalLaporan = laporan.id.isEmpty
+        ? laporan.copyWith(id: docRef.id)
+        : laporan;
 
     await docRef.set(finalLaporan.toMap());
   }
@@ -71,7 +72,10 @@ class LaporanRepository {
   // ==========================================================================
 
   Future<void> catatAktivitas(
-      String aksi, String detail, String userEmail) async {
+    String aksi,
+    String detail,
+    String userEmail,
+  ) async {
     await _db.collection('logs_laporan').add({
       'aksi': aksi,
       'detail': detail,
@@ -80,7 +84,7 @@ class LaporanRepository {
     });
   }
 
-// ==========================================================================
+  // ==========================================================================
   // SINKRONISASI MANUAL (APPS SCRIPT TRIGGER)
   // ==========================================================================
 
@@ -91,7 +95,8 @@ class LaporanRepository {
 
       if (!doc.exists || doc.data() == null) {
         throw Exception(
-            'Dokumen konfigurasi sistem tidak ditemukan di database.');
+          'Dokumen konfigurasi sistem tidak ditemukan di database.',
+        );
       }
 
       final webAppUrl = doc.data()!['webAppUrl'] as String?;
@@ -108,17 +113,19 @@ class LaporanRepository {
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw Exception(
-            'Gagal trigger sinkronisasi: HTTP ${response.statusCode}');
+          'Gagal trigger sinkronisasi: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       if (e.toString().contains('Failed to fetch') ||
           e.toString().contains('XMLHttpRequest error')) {
         debugPrint(
-            'Abaikan error CORS. Eksekusi di Google Apps Script tetap berjalan.');
+          'Abaikan error CORS. Eksekusi di Google Apps Script tetap berjalan.',
+        );
 
-        await _db.collection('sync_metadata').doc('status').set(
-            {'lastSyncToSheet': FieldValue.serverTimestamp()},
-            SetOptions(merge: true));
+        await _db.collection('sync_metadata').doc('status').set({
+          'lastSyncToSheet': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
         return;
       }
@@ -143,20 +150,15 @@ class LaporanRepository {
   }
 
   Future<void> tambahNotaris(String nama) async {
-    await _db.collection('master_data').doc('notaris').set(
-      {
-        'items': FieldValue.arrayUnion([nama])
-      },
-      SetOptions(merge: true),
-    );
+    await _db.collection('master_data').doc('notaris').set({
+      'items': FieldValue.arrayUnion([nama]),
+    }, SetOptions(merge: true));
   }
 
   Future<void> hapusNotaris(String nama) async {
-    await _db.collection('master_data').doc('notaris').update(
-      {
-        'items': FieldValue.arrayRemove([nama])
-      },
-    );
+    await _db.collection('master_data').doc('notaris').update({
+      'items': FieldValue.arrayRemove([nama]),
+    });
   }
 
   Stream<DocumentSnapshot> streamMasterNotaris() {
@@ -170,11 +172,13 @@ class LaporanRepository {
     try {
       final snapshot = await _db.collection('master_bank').get();
       return snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                'namaBank': doc.data()['namaBank'] ?? '',
-                'namaPic': doc.data()['namaPic'] ?? '',
-              })
+          .map(
+            (doc) => {
+              'id': doc.id,
+              'namaBank': doc.data()['namaBank'] ?? '',
+              'namaPic': doc.data()['namaPic'] ?? '',
+            },
+          )
           .toList();
     } catch (e) {
       debugPrint('Error get master bank: $e');
