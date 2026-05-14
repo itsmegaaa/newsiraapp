@@ -44,10 +44,10 @@ class SiraResponsiveShell extends StatelessWidget {
     final isMobile = MediaQuery.of(context).size.width < AppBreakpoints.mobile;
     final shellPadding = isMobile
         ? const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl + kToolbarHeight,
-            AppSpacing.xl,
-            AppSpacing.xl,
+            AppSpacing.base,
+            AppSpacing.base + kToolbarHeight,
+            AppSpacing.base,
+            AppSpacing.base,
           )
         : (contentPadding ?? const EdgeInsets.all(AppSpacing.xl));
 
