@@ -60,7 +60,6 @@ class SiraMobileDrawer extends StatelessWidget {
                 leading: const Icon(Icons.exit_to_app, color: AppColors.error),
                 title: Text('Keluar', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.error)),
                 onTap: () {
-                  // TODO: Integrate with authentication provider
                 },
               ),
             ],

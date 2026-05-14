@@ -48,7 +48,6 @@ class SiraSidebar extends StatelessWidget {
           InkWell(
             borderRadius: BorderRadius.circular(AppRadius.cardS),
             onTap: () {
-              // TODO: Integrate with authentication provider
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base, vertical: AppSpacing.md),
