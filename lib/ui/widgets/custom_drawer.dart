@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -194,7 +195,6 @@ class CustomDrawer extends StatelessWidget {
                           await repo
                               .tambahNotaris(notarisBaruCtrl.text.trim());
                           notarisBaruCtrl.clear();
-                          (ctx as Element).markNeedsBuild(); // Refresh dialog
                         }
                       },
                     ),
@@ -203,13 +203,18 @@ class CustomDrawer extends StatelessWidget {
                 const SizedBox(height: 20),
                 // List Notaris yang ada
                 Flexible(
-                  child: FutureBuilder<List<String>>(
-                    future: repo.getMasterNotaris(),
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: repo.streamMasterNotaris(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       }
-                      final list = snapshot.data!;
+
+                      final data = snapshot.data?.data() as Map<String, dynamic>?;
+                      final list = data != null && data['items'] is List
+                          ? List<String>.from(data['items'] as List)
+                          : <String>[];
+
                       return ListView.builder(
                         shrinkWrap: true,
                         itemCount: list.length,
@@ -223,8 +228,6 @@ class CustomDrawer extends StatelessWidget {
                                   color: Colors.redAccent, size: 20),
                               onPressed: () async {
                                 await repo.hapusNotaris(list[index]);
-                                (ctx as Element)
-                                    .markNeedsBuild(); // Refresh dialog
                               },
                             ),
                           );

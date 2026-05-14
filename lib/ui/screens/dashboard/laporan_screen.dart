@@ -63,12 +63,13 @@ class _LaporanScreenState extends State<LaporanScreen> {
         ],
       ),
       floatingActionButton: CustomExpandableFab(
-        onAddTap: () {
-          context.read<FormLaporanController>().initForm(
+        onAddTap: () async {
+          await context.read<FormLaporanController>().initForm(
                 laporanExisting: null,
                 tahunAktif: context.read<LaporanController>().tahunAktif,
               );
 
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const FormLaporanScreen()),
@@ -317,15 +318,27 @@ class _LaporanScreenState extends State<LaporanScreen> {
         direction: userProv.isAdmin
             ? DismissDirection.endToStart
             : DismissDirection.none,
-        confirmDismiss: (direction) =>
-            _konfirmasiHapus(context, item.namaDebitur),
-        onDismissed: (direction) {
-          context
-              .read<LaporanController>()
-              .hapusData(item.id, item.namaDebitur, userProv.email);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${item.namaDebitur} berhasil dihapus')),
-          );
+        confirmDismiss: (direction) async {
+          final confirmed = await _konfirmasiHapus(context, item.namaDebitur);
+          if (confirmed != true || !context.mounted) return false;
+
+          try {
+            await context
+                .read<LaporanController>()
+                .hapusData(item.id, item.namaDebitur, userProv.email);
+
+            if (!context.mounted) return false;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${item.namaDebitur} berhasil dihapus')),
+            );
+            return true;
+          } catch (_) {
+            if (!context.mounted) return false;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Gagal menghapus data')),
+            );
+            return false;
+          }
         },
         background: Container(
           alignment: Alignment.centerRight,
@@ -477,11 +490,8 @@ class _LaporanScreenState extends State<LaporanScreen> {
   }
 
   Widget _buildSlaIndicator(
-      String tanggalPelaksanaanStr, String batasSlaStr, String status) {
-    if (tanggalPelaksanaanStr.isEmpty ||
-        batasSlaStr.isEmpty ||
-        status == 'SELESAI' ||
-        status == 'BATAL') {
+      String _tanggalPelaksanaanStr, String batasSlaStr, String status) {
+    if (batasSlaStr.isEmpty || status == 'SELESAI' || status == 'BATAL') {
       return const SizedBox.shrink();
     }
 

@@ -65,6 +65,7 @@ class UserProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error fetching user data: $e');
       _role = 'STAFF';
+      _nama = email.split('@').first;
     }
   }
 

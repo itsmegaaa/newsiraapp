@@ -100,10 +100,16 @@ class LaporanRepository {
       }
 
       // Gunakan URL yang didapat dari database
-      await http.post(
+      final response = await http.post(
         Uri.parse(webAppUrl),
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'action': 'sync_from_firebase'}),
       );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception(
+            'Gagal trigger sinkronisasi: HTTP ${response.statusCode}');
+      }
     } catch (e) {
       if (e.toString().contains('Failed to fetch') ||
           e.toString().contains('XMLHttpRequest error')) {
