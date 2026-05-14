@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"newsiraapp","appId":"1:615524243967:android:8c11a2e91e83a4428aefca","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"newsiraapp","configurations":{"android":"1:615524243967:android:8c11a2e91e83a4428aefca","web":"1:615524243967:web:40717386bda8d3328aefca"}}}}}}
