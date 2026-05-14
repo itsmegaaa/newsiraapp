@@ -6,10 +6,10 @@ class CustomExpandableFab extends StatefulWidget {
   final VoidCallback onLogTap;
 
   const CustomExpandableFab({
-    Key? key,
+    super.key,
     required this.onAddTap,
     required this.onLogTap,
-  }) : super(key: key);
+  });
 
   @override
   State<CustomExpandableFab> createState() => _CustomExpandableFabState();

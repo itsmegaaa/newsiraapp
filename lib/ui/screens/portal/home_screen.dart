@@ -16,7 +16,7 @@ import '../../widgets/custom_drawer.dart';
 import '../form/form_laporan_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -270,11 +270,12 @@ class HomeScreen extends StatelessWidget {
               await context
                   .read<FormLaporanController>()
                   .initForm(laporanExisting: null, tahunAktif: ctrl.tahunAktif);
-              if (context.mounted)
+              if (context.mounted) {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (_) => const FormLaporanScreen()));
+              }
             },
             child: _buildGlassCard(
               child: Container(

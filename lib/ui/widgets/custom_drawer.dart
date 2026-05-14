@@ -9,7 +9,7 @@ import '../../data/repositories/laporan_repository.dart';
 import '../screens/master/master_bank_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
-  const CustomDrawer({Key? key}) : super(key: key);
+  const CustomDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +158,7 @@ class CustomDrawer extends StatelessWidget {
   // ==========================================================================
   void _tampilkanKelolaNotaris(BuildContext context) {
     final repo = context.read<LaporanRepository>();
-    final TextEditingController _notarisBaruCtrl = TextEditingController();
+    final TextEditingController notarisBaruCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -179,7 +179,7 @@ class CustomDrawer extends StatelessWidget {
               children: [
                 // Input Notaris Baru
                 TextField(
-                  controller: _notarisBaruCtrl,
+                  controller: notarisBaruCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Tambah nama notaris...',
@@ -188,10 +188,10 @@ class CustomDrawer extends StatelessWidget {
                       icon: const Icon(Icons.add_circle,
                           color: AppConstants.goldColor),
                       onPressed: () async {
-                        if (_notarisBaruCtrl.text.trim().isNotEmpty) {
+                        if (notarisBaruCtrl.text.trim().isNotEmpty) {
                           await repo
-                              .tambahNotaris(_notarisBaruCtrl.text.trim());
-                          _notarisBaruCtrl.clear();
+                              .tambahNotaris(notarisBaruCtrl.text.trim());
+                          notarisBaruCtrl.clear();
                           (ctx as Element).markNeedsBuild(); // Refresh dialog
                         }
                       },
@@ -204,8 +204,9 @@ class CustomDrawer extends StatelessWidget {
                   child: FutureBuilder<List<String>>(
                     future: repo.getMasterNotaris(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData)
+                      if (!snapshot.hasData) {
                         return const CircularProgressIndicator();
+                      }
                       final list = snapshot.data!;
                       return ListView.builder(
                         shrinkWrap: true,

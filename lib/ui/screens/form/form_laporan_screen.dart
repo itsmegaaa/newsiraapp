@@ -11,7 +11,7 @@ import '../../../controllers/user_provider.dart';
 import '../../../data/repositories/laporan_repository.dart';
 
 class FormLaporanScreen extends StatefulWidget {
-  const FormLaporanScreen({Key? key}) : super(key: key);
+  const FormLaporanScreen({super.key});
 
   @override
   State<FormLaporanScreen> createState() => _FormLaporanScreenState();
@@ -158,8 +158,9 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
                               Autocomplete<String>(
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) {
-                                  if (textEditingValue.text.isEmpty)
+                                  if (textEditingValue.text.isEmpty) {
                                     return const Iterable<String>.empty();
+                                  }
                                   return _listNotaris.where((option) => option
                                       .toLowerCase()
                                       .contains(
@@ -350,7 +351,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
                               const SizedBox(height: 16),
                               _buildLabel('Jenis'),
                               DropdownButtonFormField<String>(
-                                value: ['Hak Tanggungan', 'Lainnya', 'Fidusia']
+                                initialValue: ['Hak Tanggungan', 'Lainnya', 'Fidusia']
                                         .contains(ctrl.jenisCtrl.text)
                                     ? ctrl.jenisCtrl.text
                                     : null,
@@ -487,7 +488,7 @@ class _FormLaporanScreenState extends State<FormLaporanScreen> {
                             children: [
                               _buildLabel('Progres Pekerjaan (Status)'),
                               DropdownButtonFormField<String>(
-                                value: AppConstants.listStatusPekerjaan
+                                initialValue: AppConstants.listStatusPekerjaan
                                         .contains(ctrl.statusPekerjaan)
                                     ? ctrl.statusPekerjaan
                                     : null,

@@ -5,7 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/laporan_repository.dart';
 
 class MasterBankScreen extends StatelessWidget {
-  const MasterBankScreen({Key? key}) : super(key: key);
+  const MasterBankScreen({super.key});
 
   void _tampilDialogBank(BuildContext context, {DocumentSnapshot? doc}) {
     final repo = context.read<LaporanRepository>(); // Ambil repository
@@ -93,8 +93,9 @@ class MasterBankScreen extends StatelessWidget {
         // FIX MEDIUM: Panggil stream dari repository
         stream: repo.streamMasterBank(),
         builder: (context, snapshot) {
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return const Center(child: Text('Terjadi kesalahan'));
+          }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
                 child:

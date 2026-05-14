@@ -245,36 +245,46 @@ class FormLaporanController extends ChangeNotifier {
   String _hitungDiff(LaporanModel oldData, LaporanModel newData) {
     List<String> changes = [];
 
-    if (oldData.namaDebitur.toUpperCase() != newData.namaDebitur.toUpperCase())
+    if (oldData.namaDebitur.toUpperCase() != newData.namaDebitur.toUpperCase()) {
       changes.add('Debitur');
+    }
     if (oldData.namaNotaris != newData.namaNotaris) changes.add('Notaris');
-    if (oldData.namaBank.toUpperCase() != newData.namaBank.toUpperCase())
+    if (oldData.namaBank.toUpperCase() != newData.namaBank.toUpperCase()) {
       changes.add('KCU/KCP');
+    }
     if (oldData.picBank != newData.picBank) changes.add('PIC Bank');
-    if (oldData.noSuratOrder != newData.noSuratOrder)
+    if (oldData.noSuratOrder != newData.noSuratOrder) {
       changes.add('No Surat Order');
+    }
     if (oldData.tanggalOrder != newData.tanggalOrder) changes.add('Tgl Order');
     if (oldData.jenis != newData.jenis) changes.add('Jenis');
-    if (oldData.rincianOrder != newData.rincianOrder)
+    if (oldData.rincianOrder != newData.rincianOrder) {
       changes.add('Rincian Order');
-    if (oldData.noCovernote.toUpperCase() != newData.noCovernote.toUpperCase())
+    }
+    if (oldData.noCovernote.toUpperCase() != newData.noCovernote.toUpperCase()) {
       changes.add('No Covernote');
+    }
     if (oldData.limitPlafon != newData.limitPlafon) changes.add('Limit');
     if (oldData.nilaiHT != newData.nilaiHT) changes.add('Nilai HT');
     if (oldData.biayaNotaris != newData.biayaNotaris) changes.add('Biaya');
-    if (oldData.tanggalPelaksanaan != newData.tanggalPelaksanaan)
+    if (oldData.tanggalPelaksanaan != newData.tanggalPelaksanaan) {
       changes.add('Tgl Pelaksanaan');
+    }
     if (oldData.batasSla != newData.batasSla) changes.add('Batas SLA');
-    if (oldData.umurPekerjaan != newData.umurPekerjaan)
+    if (oldData.umurPekerjaan != newData.umurPekerjaan) {
       changes.add('Umur Pekerjaan');
-    if (oldData.statusPekerjaan != newData.statusPekerjaan)
+    }
+    if (oldData.statusPekerjaan != newData.statusPekerjaan) {
       changes.add('Progres Pekerjaan (Status)');
-    if (oldData.progresDetail != newData.progresDetail)
+    }
+    if (oldData.progresDetail != newData.progresDetail) {
       changes.add('Progres Terakhir');
+    }
     if (oldData.tanggalBast != newData.tanggalBast) changes.add('Tgl BAST');
     if (oldData.notes != newData.notes) changes.add('Per Kasus');
-    if (oldData.kekurangan.toUpperCase() != newData.kekurangan.toUpperCase())
+    if (oldData.kekurangan.toUpperCase() != newData.kekurangan.toUpperCase()) {
       changes.add('Kekurangan');
+    }
     if (oldData.picInternal != newData.picInternal) changes.add('PIC Internal');
 
     return changes.isEmpty

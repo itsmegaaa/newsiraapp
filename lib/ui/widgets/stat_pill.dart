@@ -8,12 +8,12 @@ class StatPill extends StatelessWidget {
   final IconData? icon;
 
   const StatPill({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.color,
     this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

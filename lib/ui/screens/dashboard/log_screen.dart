@@ -7,7 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/laporan_repository.dart';
 
 class LogScreen extends StatelessWidget {
-  const LogScreen({Key? key}) : super(key: key);
+  const LogScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

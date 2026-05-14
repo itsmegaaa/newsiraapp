@@ -9,7 +9,7 @@ import '../form/form_laporan_screen.dart';
 class DetailLaporanScreen extends StatelessWidget {
   final dynamic item; // Menerima data kartu yang ditekan
 
-  const DetailLaporanScreen({Key? key, required this.item}) : super(key: key);
+  const DetailLaporanScreen({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {

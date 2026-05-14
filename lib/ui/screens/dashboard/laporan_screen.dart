@@ -15,7 +15,7 @@ import 'log_screen.dart';
 import '../../widgets/expandable_fab.dart';
 
 class LaporanScreen extends StatefulWidget {
-  const LaporanScreen({Key? key}) : super(key: key);
+  const LaporanScreen({super.key});
 
   @override
   State<LaporanScreen> createState() => _LaporanScreenState();
@@ -500,8 +500,9 @@ class _LaporanScreenState extends State<LaporanScreen> {
 
     try {
       final tglBatasSla = parseFlexibleDate(batasSlaStr);
-      if (tglBatasSla == null)
+      if (tglBatasSla == null) {
         throw const FormatException('Format tanggal tidak valid');
+      }
 
       final sisaWaktu = tglBatasSla.difference(DateTime.now()).inDays;
 
