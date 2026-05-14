@@ -25,33 +25,31 @@ class SiraStatusBadge extends StatelessWidget {
     this.small = false,
   });
 
-  Color get _backgroundColor {
-    switch (status) {
-      case SiraStatus.success:
-        return AppColors.success.withOpacity(0.1);
-      case SiraStatus.warning:
-        return AppColors.warning.withOpacity(0.1);
-      case SiraStatus.error:
-        return AppColors.error.withOpacity(0.1);
-      case SiraStatus.info:
-      default:
-        return AppColors.primary.withOpacity(0.1);
-    }
+Color get _backgroundColor {
+  switch (status) {
+    case SiraStatus.success:
+      return AppColors.success.withOpacity(0.1);
+    case SiraStatus.warning:
+      return AppColors.warning.withOpacity(0.1);
+    case SiraStatus.error:
+      return AppColors.error.withOpacity(0.1);
+    case SiraStatus.info:
+      return AppColors.primary.withOpacity(0.1);
   }
+}
 
-  Color get _textColor {
-    switch (status) {
-      case SiraStatus.success:
-        return AppColors.success;
-      case SiraStatus.warning:
-        return AppColors.warning;
-      case SiraStatus.error:
-        return AppColors.error;
-      case SiraStatus.info:
-      default:
-        return AppColors.primary;
-    }
+Color get _textColor {
+  switch (status) {
+    case SiraStatus.success:
+      return AppColors.success;
+    case SiraStatus.warning:
+      return AppColors.warning;
+    case SiraStatus.error:
+      return AppColors.error;
+    case SiraStatus.info:
+      return AppColors.primary;
   }
+}
 
   @override
   Widget build(BuildContext context) {
